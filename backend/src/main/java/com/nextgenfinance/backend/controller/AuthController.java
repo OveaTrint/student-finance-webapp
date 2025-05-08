@@ -76,4 +76,19 @@ public class AuthController {
         // Create a UserDto if you don't want to expose the User entity directly
         return ResponseEntity.ok(new AuthResponse("User fetched", user.getUsername()));
     }
+
+    @GetMapping("/csrf-token")
+    public ResponseEntity<?> getCsrfToken() {
+        // This endpoint doesn't need to do much.
+        // The CsrfFilter running for this authenticated GET request
+        // should cause CookieCsrfTokenRepository to ensure the cookie is set.
+        // You could return the token value in the body if the client prefers that
+        // but for CookieCsrfTokenRepository, the primary mechanism is the cookie itself.
+        // Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        // CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+        // if (csrfToken != null) {
+        //    return ResponseEntity.ok().header(csrfToken.getHeaderName(), csrfToken.getToken()).body("CSRF token obtained");
+        // }
+        return ResponseEntity.ok().body("CSRF token cookie should be set if not already.");
+    }
 }
