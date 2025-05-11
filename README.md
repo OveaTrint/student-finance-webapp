@@ -1,6 +1,6 @@
 # NextGen Finance - Backend API
 
-This is the backend API for the NextGen Finance application, a student finance web app designed to help users manage their income, expenses, and track their financial overview. This project was developed as part of [Your Course Name, e.g., CSC 212] at [Your School/University Name].
+This is the backend API for the NextGen Finance application, a student finance web app designed to help users manage their income, expenses, and track their financial overview. This project was developed as part of [CSC 212] at [UNILAG].
 
 ## Features (MVP - Minimum Viable Product)
 
@@ -97,9 +97,8 @@ A brief overview of key API endpoints (assuming base path `/api`):
 4.  **Run the Application:**
     The executable JAR will be created in the `target/` (for Maven) or `build/libs/` (for Gradle) directory.
     ```bash
-    java -jar target/nextgenfinance-backend-0.0.1-SNAPSHOT.jar
+    java -jar target/backend-0.0.1-SNAPSHOT
     ```
-    (Replace `nextgenfinance-backend-0.0.1-SNAPSHOT.jar` with the actual name of your generated JAR file).
 
 5.  The backend API will typically start on `http://localhost:8080`.
 
