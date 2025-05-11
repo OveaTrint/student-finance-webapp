@@ -1,7 +1,6 @@
 # NextGen Finance - Backend API
 
-This is the backend API for the NextGen Finance application, a student finance web app designed to help users manage their income, expenses, and track their financial overview. This project was developed as part of [CSC 212] at [UNILAG].
-
+This is the backend API for the NextGen Finance application, a student finance web app designed to help users manage their income, expenses, and track their financial overview.
 ## Features (MVP - Minimum Viable Product)
 
 The backend supports the following core features:
