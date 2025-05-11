@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextGen Finance - Login</title>
+    <link rel="stylesheet" href="path/to/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/responsive.css">
+</head>
+<body>
+    <div class="card">
+        <header class="header">
+            <div class="brand">NextGen Finance</div>
+        </header>
+
+        <div class="auth-container">
+            <div class="auth-content">
+                <div class="tabs">
+                    <button class="tab" id="loginTab">Login</button>
+                    <button class="tab" id="signupTab">Sign Up</button>
+                </div>
+            
+                <!-- Login Form (initially visible) -->
+                <form id="loginForm" class="auth-form">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" required>
+                    </div>
+            
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" required>
+                    </div>
+            
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="remember">
+                        <label for="remember">Remember me</label>
+                    </div>
+            
+                    <a href="#" class="forgot-password">Forgot password?</a>
+            
+                    <button type="submit" class="cta-button">Login</button>
+            
+                    <button type="button" class="google-button">
+                        <span>Continue with Google</span>
+                    </button>
+                </form>
+            
+                <!-- Sign Up Form (initially hidden) -->
+                <form id="signupForm" class="auth-form" style="display: none;">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" required>
+                    </div>
+            
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" required>
+                    </div>
+            
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Allowance Frequency</label>
+                        <select name="frequency" required>
+                            <option value="WEEKLY">Weekly</option>
+                            <option value="MONTHLY" selected>Monthly</option>
+                            <option value="BIWEEKLY">Bi-weekly</option>
+                        </select>
+                    </div>
+            
+                    <button type="submit" class="cta-button">Sign Up</button>
+            
+                    <button type="button" class="google-button">
+                        <span>Continue with Google</span>
+                    </button>
+                </form>
+            </div>
+            <div class="illustration">
+                Security illustration
+            </div>
+        </div>
+
+        <footer class="footer">
+            <span>© 2025 NextGen Finance. All rights reserved.</span>
+            <div class="social-icons">
+                <div class="social-icon"></div>
+                <div class="social-icon"></div>
+                <div class="social-icon"></div>
+            </div>
+        </footer>
+    </div>
+    <script src="./script.js"></script>
+    <script src="./api/userApi.js"></script>
+</body>
+</html>    

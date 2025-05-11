@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Car Fund - NextGen Finance</title>
+    <link rel="stylesheet" href="path/to/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/responsive.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">
+                <a href="index.html">NextGen Finance</a>
+            </div>
+        <div class="nav-links">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="saving_goal.html" class="nav-link active">Savings Goals</a>
+            <a href="transaction.html" class="nav-link">Transactions</a>
+            <a href="#" class="nav-link">Analytics</a>
+        </div>
+        <div class="user-menu">
+            <div class="user-avatar">A</div>
+        </div>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="view-header">
+            <a href="saving_goal.html" class="back-button">←</a>
+            <span>NextGen Finance</span>
+        </div>
+
+        <h1 class="goal-title">New Car Fund</h1>
+        <p class="goal-type">Vehicle Savings Goal</p>
+
+        <div class="goal-stats">
+            <div class="stat-item">
+                <div class="stat-label">Target Amount</div>
+                <div class="stat-value">₦25,000</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Status</div>
+                <div class="locked-status">
+                    <span>🔒</span>
+                    <span>Goal Locked</span>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Target Date</div>
+                <div class="stat-value">December 1, 2025</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Time Remaining</div>
+                <div class="stat-value">7 months</div>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-header">
+                <span>₦15,000 saved</span>
+                <span>60% Complete</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="stat-value" style="text-align: right; margin-top: 0.5rem;">
+                ₦10,000 remaining
+            </div>
+        </div>
+
+        <button class="add-button" disabled>+ Add to Goal (Locked)</button>
+        <p class="lock-message">This goal is locked. No deposits allowed until unlocked.</p>
+
+        <h3 class="activity-header">Recent Activity</h3>
+        <div class="activity-item">
+            <div>
+                <div class="activity-type">Deposit</div>
+                <div class="activity-date">Apr 15, 2025</div>
+            </div>
+            <div class="activity-amount">+₦500.00</div>
+        </div>
+        <div class="activity-item">
+            <div>
+                <div class="activity-type">Deposit</div>
+                <div class="activity-date">Mar 28, 2025</div>
+            </div>
+            <div class="activity-amount">+₦1,000.00</div>
+        </div>
+        <div class="activity-item">
+            <div>
+                <div class="activity-type">Deposit</div>
+                <div class="activity-date">Feb 15, 2025</div>
+            </div>
+            <div class="activity-amount">+₦2,500.00</div>
+        </div>
+    </div>
+
+    <script src="./script.js"></script>
+    <script src="./api/userApi.js"></script>
+</body>
+</html>  
