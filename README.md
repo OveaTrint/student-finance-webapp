@@ -50,7 +50,7 @@ The backend supports the following core features:
     *   Spring Data JPA (for database interaction with Hibernate)
     *   Spring Security (for authentication and authorization)
 *   **Database:** H2 In-Memory Database (for development and demo)
-*   **Build Tool:** Maven (or Gradle, specify which you used)
+*   **Build Tool:** Maven
 *   **Authentication Method:** Session-based (HttpOnly `JSESSIONID` cookie)
 
 ## API Endpoints
