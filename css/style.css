@@ -277,12 +277,22 @@ h1 {
   margin-bottom: 1.5rem;
 }
 
-input {
+input[type="email"],
+input[type="password"],
+input[type="text"], 
+input[type="number"] {
   width: 100%;
   padding: 0.8rem;
   border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 1rem;
+  box-sizing: border-box; 
+}
+
+input[type="checkbox"] {
+  width: auto; 
+  padding: 0;  
+  accent-color: #333; 
 }
 
 .checkbox-group {
@@ -290,6 +300,11 @@ input {
   align-items: center;
   gap: 0.5rem;
   margin: 1.5rem 0;
+}
+
+.checkbox-group label {
+  flex-shrink: 0; 
+  padding-top: 0.6rem;
 }
 
 .forgot-password {
