@@ -20,7 +20,7 @@ import java.util.Comparator;
 
 
 @RestController
-@RequestMapping("/api/transactions")
+@RequestMapping("/transactions")
 public class TransactionController {
 
     @Autowired

@@ -55,16 +55,16 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers("/auth/register", "/auth/login").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/**").authenticated()
                         .anyRequest().permitAll()
                 )
                 .formLogin(formLogin -> formLogin.disable()) // You handle login programmatically
                 .logout(logout -> logout
-                        .logoutRequestMatcher(new AntPathRequestMatcher("/api/auth/logout", "POST"))
+                        .logoutRequestMatcher(new AntPathRequestMatcher("/auth/logout", "POST"))
                         .logoutSuccessHandler((request, response, authentication) -> {
                             response.setStatus(HttpStatus.OK.value());
                             response.getWriter().write("{\"message\":\"Logout successful\"}");
@@ -79,15 +79,15 @@ public class SecurityConfig {
 
         return http.build();
     }
-
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5500", "http://127.0.0.1:5500"));
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:5500",  // Keep if still needed
+                "http://127.0.0.1:5500", // Keep if still needed
+                "http://localhost:8000"   // **** ADD THIS LINE ****
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        // With CSRF disabled, X-XSRF-TOKEN and X-CSRF-TOKEN are no longer needed by the backend
-        // but clients might still send them. It doesn't hurt to keep them allowed if you want.
-        // Or simplify:
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

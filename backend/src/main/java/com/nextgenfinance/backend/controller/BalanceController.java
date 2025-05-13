@@ -14,7 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 
 @RestController
-@RequestMapping("/api/balance")
+@RequestMapping("/balance")
 public class BalanceController {
 
     @Autowired
