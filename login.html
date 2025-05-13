@@ -1,102 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NextGen Finance - Login</title>
-    <link rel="stylesheet" href="./css/style.css">
-    <link rel="stylesheet" href="./css/responsive.css">
-</head>
-<body>
-    <!-- Navbar can be added here if needed, consistent with other authenticated pages, 
-         but typically login/signup pages are simpler or have a different nav. 
-         For now, let's keep it focused on the auth form. -->
-
+    <link
+      rel="stylesheet"
+      href="path/to/font-awesome/css/font-awesome.min.css"
+    />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/responsive.css" />
+  </head>
+  <body>
     <div class="card">
-        <header class="header" style="text-align: center; margin-bottom: 1.5rem;"> <!-- Added some styling for centering brand -->
-            <div class="brand" style="font-size: 1.8rem; font-weight: 600;">NextGen Finance</div>
-        </header>
+      <header class="header">
+        <div class="brand">NextGen Finance</div>
+      </header>
 
-        <div class="auth-container">
-            <div class="auth-content">
-                <div class="tabs">
-                    <button class="tab active" id="loginTab">Login</button> <!-- Default to login active -->
-                    <button class="tab" id="signupTab">Sign Up</button>
-                </div>
-            
-                <!-- Login Form -->
-                <form id="loginForm" class="auth-form"> <!-- Display by default handled in script.js -->
-                    <div class="form-group">
-                        <label>Username or Email</label> <!-- Changed label for clarity -->
-                        <input type="text" name="username" placeholder="Enter your username" required> <!-- Changed type to text for username -->
-                    </div>
-            
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" name="password" placeholder="Enter your password" required>
-                    </div>
-            
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="remember">
-                        <label for="remember">Remember me</label>
-                    </div>
-            
-                    <a href="#" class="forgot-password">Forgot password?</a>
-            
-                    <button type="submit" class="cta-button">Login</button>
-        
-                </form>
-            
-                <!-- Sign Up Form (initially hidden by script.js based on URL param or default) -->
-                <form id="signupForm" class="auth-form" style="display: none;">
-                    <div class="form-group">
-                        <label>Full Name (used as Username)</label> <!-- Clarify this will be username -->
-                        <input type="text" name="fullName" placeholder="Enter your full name" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Email (Optional, for contact)</label> 
-                        <!-- If backend needs email, add it. Currently, backend RegisterRequest takes username. -->
-                        <input type="email" name="email" placeholder="Enter your email">
-                    </div>
-            
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="signupPassword" name="password" placeholder="Create a password" required>
-                    </div>
-            
-                    <div class="form-group">
-                        <label>Confirm Password</label>
-                        <input type="password" id="signupConfirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
-                    </div>
+      <div class="auth-container">
+        <div class="auth-content">
+          <div class="tabs">
+            <button class="tab" id="loginTab">Login</button>
+            <button class="tab" id="signupTab">Sign Up</button>
+          </div>
 
-                    <div class="form-group">
-                        <label>Preferred Allowance Cycle</label>
-                        <select name="allowanceCycleFrequency" required> <!-- name matches script.js and userApi.js -->
-                            <option value="MONTHLY">Monthly</option>
-                            <option value="WEEKLY">Weekly</option>
-                            <!-- Add other frequencies if supported by backend enum -->
-                        </select>
-                    </div>
-            
-                    <button type="submit" class="cta-button">Sign Up</button>
-                </form>
+          <!-- Login Form (initially visible) -->
+          <form id="loginForm" class="auth-form">
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" required />
             </div>
-            <div class="illustration" style="text-align: center;"> <!-- Adjusted placeholder -->
-                Security and Simplicity
+
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" required />
             </div>
+
+            <div class="checkbox-group">
+              <input type="checkbox" id="remember" />
+              <label for="remember">Remember me</label>
+            </div>
+
+            <a href="#" class="forgot-password">Forgot password?</a>
+
+            <button type="submit" class="cta-button">Login</button>
+
+          </form>
+
+          <!-- Sign Up Form (initially hidden) -->
+          <form id="signupForm" class="auth-form" style="display: none">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" required />
+            </div>
+
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" required />
+            </div>
+
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" required />
+            </div>
+
+            <div class="form-group">
+              <label>Confirm Password</label>
+              <input type="password" required />
+            </div>
+
+            <div class="form-group">
+              <label>Allowance Frequency</label>
+              <select name="frequency" required>
+                <option value="WEEKLY">Weekly</option>
+                <option value="MONTHLY" selected>Monthly</option>
+                <option value="BIWEEKLY">Bi-weekly</option>
+              </select>
+            </div>
+
+            <button type="submit" class="cta-button">Sign Up</button>
+          </form>
         </div>
+        <div class="illustration">
+          <!-- <div><img src="./images/security.jpg" alt="" /></div> -->
+        </div>
+      </div>
 
-        <footer class="footer">
-            <span>© 2025 NextGen Finance. All rights reserved.</span>
-            <div class="social-icons">
-                <div class="social-icon"></div>
-                <div class="social-icon"></div>
-                <div class="social-icon"></div>
-            </div>
-        </footer>
+      <footer class="footer">
+        <span>© 2025 NextGen Finance. All rights reserved.</span>
+        <div class="social-icons">
+          <div class="social-icon"></div>
+          <div class="social-icon"></div>
+          <div class="social-icon"></div>
+        </div>
+      </footer>
     </div>
-    <script src="./api/userApi.js"></script> <!-- API UTILITIES FIRST -->
-    <script src="./script.js"></script>      <!-- MAIN SCRIPT LAST -->
-</body>
+   <script src="./api/userApi.js"></script>
+   <script src="./script.js"></script>
+  </body>
 </html>
