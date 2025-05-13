@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NextGen Finance</title>
-    <!-- Using a Font Awesome CDN link as an example for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.7/css/all.css">
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/responsive.css">
 </head>
@@ -15,7 +14,10 @@
             <h1>Welcome to NextGen Finance</h1>
             <p class="subheading">Take control of your financial future with smart tools, personalized insights, and a simplified approach to money management.</p>
             
-            <div class="illustration"></div>
+
+            <div class="illustration">
+                <!-- <div><img src="./images/welcome.jpg" alt=""></div> -->
+            </div>
 
             <div class="cta-container">
                 <a href="login.html?form=signup" class="cta-button">Get Started +</a>
@@ -25,9 +27,9 @@
             <div class="social-proof">
                 <span>Trusted by our users</span>
                 <div class="user-icons">
-                    <div class="user-icon"><i class="fas fa-user"></i></div>
-                    <div class="user-icon"><i class="fas fa-user"></i></div>
-                    <div class="user-icon"><i class="fas fa-user"></i></div>
+                    <div class="user-icon"><i class="fa fa-user" aria-hidden="true"></i></div>
+                    <div class="user-icon"><i class="fa fa-user" aria-hidden="true"></i></div>
+                    <div class="user-icon"><i class="fa fa-user" aria-hidden="true"></i></div>
                 </div>
             </div>
         </main>
@@ -35,14 +37,14 @@
         <footer class="footer">
             <span>© 2025 NextGen Finance. All rights reserved.</span>
             <div class="social-icons">
-                <div class="social-icon"><i class="fab fa-facebook-f"></i></div>
-                <div class="social-icon"><i class="fab fa-instagram"></i></div>
-                <div class="social-icon"><i class="fab fa-twitter"></i></div>
+                <div class="social-icon"><i class="fa fa-facebook"></i></div>
+                <div class="social-icon"><i class="fa fa-instagram"></i></div>
+                <div class="social-icon"><i class="fa fa-twitter"></i></div>
             </div>
         </footer>
     </div>
 
-    <script src="./api/userApi.js"></script> <!-- API UTILITIES FIRST -->
-    <script src="./script.js"></script>      <!-- MAIN SCRIPT LAST -->
+    <script src="./api/userApi.js"></script>
+    <script src="./script.js"></script>
 </body>
 </html>
