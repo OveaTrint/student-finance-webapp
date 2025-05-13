@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NextGen Finance - Dashboard</title>
-    <!-- Add Font Awesome if you plan to use icons in user-avatar or elsewhere -->
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> -->
+    <link rel="stylesheet" href="path/to/font-awesome/css/font-awesome.min.css">
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/responsive.css">
 </head>
@@ -15,74 +14,87 @@
             <div class="navbar-brand">
                 <a href="index.html">NextGen Finance</a>
             </div>
-            <div class="nav-links">
-                <a href="dashboard.html" class="nav-link active">Dashboard</a>
-                <a href="transaction.html" class="nav-link">Transactions</a>
-                <!-- Add other nav links for Savings Goals, Analytics if/when implemented -->
-                <!-- <a href="saving_goal.html" class="nav-link">Savings Goals</a> -->
-                <!-- <a href="#" class="nav-link">Analytics</a> -->
-            </div>
-            <div class="user-menu" style="display: none;"> <!-- Initially hidden, shown by script.js if user logged in -->
-                <div class="user-avatar">U</div> <!-- Placeholder, script.js will update -->
-                <div class="dropdown-menu">
-                  <a href="#" id="logoutBtn">Logout</a>
-                </div>
-            </div>
+        <div class="nav-links">
+            <a href="dashboard.html" class="nav-link active">Dashboard</a>
+            <a href="transaction.html" class="nav-link">Transactions</a>
+            <a href="#" class="nav-link">Analytics</a>
         </div>
+        <div class="user-menu">
+            <div class="user-avatar"></div>
+            <div class="dropdown-menu">
+              <a href="#" id="logoutBtn">Logout</a>
+            </div>
+          </div>
     </nav>
     <div class="card">
         <header class="dashboard-header">
             <div>
                 <div class="user-greeting">
-                    <h2>Welcome back!</h2> <!-- Populated by script.js -->
-                    <p class="overview-message">Loading your financial overview...</p> <!-- Populated by script.js -->
+                    <h2>Welcome back, Alex!</h2>
+                    <p class="overview-message">Here's your financial overview for May 2025</p>
                 </div>
             </div>
             <div class="action-buttons">
                 <button class="action-button" id="addTransactionBtn">Add Transaction</button>
-                <!-- <button class="action-button" id="setSavingsGoalBtn">Set a Saving Goal</button> --> <!-- Savings goals not in MVP -->
+                <button class="action-button" id="setSavingsGoalBtn">Set a Saving Goal</button>
             </div>
         </header>
 
         <div class="metrics-grid">
             <div class="metric-card">
                 <div class="metric-title">Total Income</div>
-                <div class="metric-value">₦0.00</div> <!-- Populated by script.js -->
-                <!-- Metric change from last month can be a future enhancement -->
-                <!-- <div class="metric-change positive">↑ 12.5% from last month</div> -->
+                <div class="metric-value">₦8,250.00</div>
+                <div class="metric-change positive">
+                    ↑ 12.5% from last month
+                </div>
             </div>
             
             <div class="metric-card">
                 <div class="metric-title">Total Expenses</div>
-                <div class="metric-value">₦0.00</div> <!-- Populated by script.js -->
-                <!-- <div class="metric-change negative">↓ 3.2% from last month</div> -->
+                <div class="metric-value">₦4,320.00</div>
+                <div class="metric-change negative">
+                    ↓ 3.2% from last month
+                </div>
             </div>
             
             <div class="metric-card">
                 <div class="metric-title">Current Balance</div>
-                <div class="metric-value">₦0.00</div> <!-- Populated by script.js -->
+                <div class="metric-value">₦3,930.00</div>
                 <div class="metric-change">Available to spend</div>
             </div>
         </div>
 
         <div class="chart-section">
             <div class="chart-header">
-                <h3>Transaction Chart (Future)</h3>
-                <!-- <select class="chart-filter">
+                <h3>Transaction Chart</h3>
+                <select class="chart-filter">
                     <option>Last 7 days</option>
                     <option>Last 30 days</option>
                     <option>Last 6 months</option>
-                </select> -->
+                </select>
             </div>
             <div class="chart-placeholder">
-                Transaction Chart Visualization (Placeholder for future implementation)
+                Transaction Chart Visualization
             </div>
         </div>
 
-        <div class="transactions-list"> 
+        <div class="transactions-list">
             <h3>Recent Transactions</h3>
-            <!-- Content will be populated by script.js -->
-            <p>Loading transactions...</p>
+            <div class="transaction-item">
+                <div>
+                    <div class="transaction-category">Shopping</div>
+                    <div class="transaction-date">May 1, 2025</div>
+                </div>
+                <div class="transaction-amount negative">-₦120.00</div>
+            </div>
+            
+            <div class="transaction-item">
+                <div>
+                    <div class="transaction-category">Salary Deposit</div>
+                    <div class="transaction-date">Apr 30, 2025</div>
+                </div>
+                <div class="transaction-amount positive">+₦3,500.00</div>
+            </div>
         </div>
 
         <footer class="footer">
@@ -94,7 +106,7 @@
             </div>
         </footer>
     </div>
-    <script src="./api/userApi.js"></script> <!-- API UTILITIES FIRST -->
-    <script src="./script.js"></script>      <!-- MAIN SCRIPT LAST -->
+   <script src="./api/userApi.js"></script>
+   <script src="./script.js"></script>
 </body>
 </html>
