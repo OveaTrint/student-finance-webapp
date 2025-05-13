@@ -1,21 +1,11 @@
-// ==================== IMPORT API FUNCTIONS (if using modules, otherwise they are global) ====================
-// Assuming userApi.js functions are available globally (e.g., if userApi.js is included before script.js)
-// If you were to use ES6 modules (requires type="module" in <script> tag):
-// import * as api from './api/userApi.js'; // Then call api.login(), api.addTransaction() etc.
-// For simplicity now, we'll assume userApi.js functions (login, addTransaction, etc.) are globally accessible.
+// ==================== UTILITY FUNCTIONS ====================
 
-// ==================== UTILITY FUNCTIONS (Mostly unchanged) ====================
-
-function getCurrentUserUsernameFromStorage() { // Renamed to avoid conflict with api.getCurrentUserUsername if it existed
-    return localStorage.getItem('currentUser'); // Stores only username now
+function getCurrentUser() {
+    return JSON.parse(localStorage.getItem('user')) || null;
 }
 
-function updateUserDataInStorage(username) { // Stores only username
-    if (username) {
-        localStorage.setItem('currentUser', username);
-    } else {
-        localStorage.removeItem('currentUser');
-    }
+function updateUserData(user) {
+    localStorage.setItem('user', JSON.stringify(user));
 }
 
 function showError(message, elementId = null) {
@@ -27,35 +17,22 @@ function showError(message, elementId = null) {
         const targetElement = document.getElementById(elementId);
         if (targetElement) {
             const existingError = targetElement.querySelector('.error-message');
-            if (existingError) existingError.remove(); // Clear previous errors in that specific form
-            targetElement.prepend(errorElement); // Prepend so it appears at the top of the form
+            if (existingError) existingError.remove();
+            targetElement.prepend(errorElement);
         }
     } else {
-        // Fallback if no elementId, perhaps a general notification area?
-        // For now, let's assume form-specific errors are primary.
-        alert(`Error: ${message}`); // Simple alert for general errors
+        document.body.prepend(errorElement);
     }
     
-    if (elementId && errorElement.parentNode) { // Only set timeout if it was added to a form
-      setTimeout(() => {
-          if (errorElement.parentNode) {
-            errorElement.remove();
-          }
-      }, 5000);
-    }
+    setTimeout(() => errorElement.remove(), 5000);
 }
 
-// ==================== DOM ELEMENT INTERACTIONS (Mostly unchanged) ====================
-// This can remain largely the same, it handles UI elements directly.
+// ==================== DOM ELEMENT INTERACTIONS ====================
+
+// Radio Button Interactions
 document.querySelectorAll('.type-option input[type="radio"]').forEach(radio => {
-    // Toggle 'selected' class for styling the selected radio button's parent label
-    const parentOption = radio.closest('.type-option');
     if(radio.checked) {
-        parentOption.classList.add('selected');
-        // Show/hide frequency field based on type (initial load for transaction.html)
-        if (document.getElementById('frequencyField')) {
-            document.getElementById('frequencyField').style.display = radio.value === 'income' ? 'block' : 'none';
-        }
+        radio.closest('.type-option').classList.add('selected');
     }
     
     radio.addEventListener('change', () => {
@@ -63,22 +40,17 @@ document.querySelectorAll('.type-option input[type="radio"]').forEach(radio => {
             option.classList.remove('selected');
         });
         if(radio.checked) {
-            parentOption.classList.add('selected');
-             // Show/hide frequency field based on type (on change for transaction.html)
-            if (document.getElementById('frequencyField')) {
-                document.getElementById('frequencyField').style.display = radio.value === 'income' ? 'block' : 'none';
-            }
+            radio.closest('.type-option').classList.add('selected');
         }
     });
 });
 
-
+// Toggle Switch Interaction
 document.querySelector('.switch input')?.addEventListener('change', function() {
-    console.log('Lock Goal (Not Implemented in Backend MVP):', this.checked);
+    console.log('Lock Goal:', this.checked);
 });
 
-
-// ==================== AUTHENTICATION & FORM HANDLING (Major Changes) ====================
+// ==================== AUTHENTICATION & FORM HANDLING ====================
 
 function getUrlParameter(name) {
     name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
@@ -87,7 +59,7 @@ function getUrlParameter(name) {
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 }
 
-function initAuthForms() { // login.html
+function initAuthForms() {
     const loginTab = document.getElementById('loginTab');
     const signupTab = document.getElementById('signupTab');
     const loginForm = document.getElementById('loginForm');
@@ -95,6 +67,7 @@ function initAuthForms() { // login.html
     
     if (!loginTab || !signupTab || !loginForm || !signupForm) return;
     
+    // Initialize form state
     const formType = getUrlParameter('form');
     if (formType === 'signup') {
         signupTab.classList.add('active');
@@ -108,374 +81,377 @@ function initAuthForms() { // login.html
         signupForm.style.display = 'none';
     }
     
-    loginTab.addEventListener('click', () => { /* ... (UI toggle logic, unchanged) ... */ });
-    signupTab.addEventListener('click', () => { /* ... (UI toggle logic, unchanged) ... */ });
-    
-    // Login Form submission
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const submitButton = loginForm.querySelector('button[type="submit"]');
-        const originalButtonText = submitButton.textContent;
-        submitButton.textContent = 'Logging in...';
-        submitButton.disabled = true;
-
-        const username = loginForm.querySelector('input[type="email"]').value; // Assuming email field is used for username
-        const password = loginForm.querySelector('input[type="password"]').value;
-        
-        try {
-            // Uses login function from userApi.js (ensure userApi.js is loaded before this script)
-            const loginResponse = await login(username, password); // Uses username as expected by backend
-            updateUserDataInStorage(loginResponse.username); // Store username from response
-            window.location.href = 'dashboard.html';
-        } catch (error) {
-            showError(error.message || 'Login failed. Please check your credentials.', 'loginForm');
-        } finally {
-            submitButton.textContent = originalButtonText;
-            submitButton.disabled = false;
-        }
+    // Tab click handlers
+    loginTab.addEventListener('click', () => {
+        loginTab.classList.add('active');
+        loginForm.style.display = 'block';
+        signupTab.classList.remove('active');
+        signupForm.style.display = 'none';
     });
     
-    // Signup Form submission
-    signupForm.addEventListener('submit', async (e) => {
+    signupTab.addEventListener('click', () => {
+        signupTab.classList.add('active');
+        signupForm.style.display = 'block';
+        loginTab.classList.remove('active');
+        loginForm.style.display = 'none';
+    });
+    
+    // Form submissions
+   loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const submitButton = signupForm.querySelector('button[type="submit"]');
-        const originalButtonText = submitButton.textContent;
-        submitButton.textContent = 'Signing up...';
-        submitButton.disabled = true;
-
-        const fullName = signupForm.querySelector('input[type="text"]').value; // Full Name might map to username or a separate field
-        // Backend expects 'username', not 'email' as the primary identifier during registration.
-        // For simplicity, let's assume 'fullName' is used as 'username' for registration.
-        // If 'email' is distinct, your backend DTO and service need to handle it.
-        const emailValue = signupForm.querySelector('input[type="email"]').value; // Collect email if used
-        const password = signupForm.querySelector('#signupPassword').value; // Ensure unique IDs for password fields
-        const confirmPassword = signupForm.querySelector('#signupConfirmPassword').value;
-        const frequency = signupForm.querySelector('select[name="allowanceCycleFrequency"]').value; // Ensure correct name for select
-
-        const userData = {
-            username: fullName, // Assuming fullName maps to username for backend
-            // email: emailValue, // Send if backend expects 'email' explicitly in RegisterRequest
-            password: password,
-            confirmPassword: confirmPassword, // Client-side check in register() of userApi.js will happen
-            allowanceCycleFrequency: frequency.toUpperCase() // Backend expects uppercase: MONTHLY/WEEKLY
+        const formData = {
+            username: loginForm.querySelector('input[type="text"]').value,
+            password: loginForm.querySelector('input[type="password"]').value
         };
         
         try {
-            // Uses register function from userApi.js
-            await register(userData);
-            // After successful registration, redirect to login or show a success message.
-            // For now, let's redirect to login with a success query param.
-            alert('Registration successful! Please login.'); // Simple alert
-            window.location.href = 'login.html?form=login®istered=true';
+            const user = await loginUser(username, password); // API call
+            if (user && user.username) {
+                window.location.href = 'dashboard.html';
+            } else {
+                 showError("Login successful, but user data couldn't be fully retrieved. Try refreshing.", loginForm);
+            }
         } catch (error) {
-            showError(error.message || 'Registration failed. Please try again.', 'signupForm');
-        } finally {
-            submitButton.textContent = originalButtonText;
-            submitButton.disabled = false;
+            showError(error.message, loginForm);
+        }
+    });
+    
+    signupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const passwords = signupForm.querySelectorAll('input[type="password"]');
+        const userData = {
+            fullName: signupForm.querySelector('input[type="text"]').value, 
+            usename: signupForm.querySelector('input[type="text"]').value,
+            password: passwords[0].value,
+            confirmPassword: passwords[1].value,
+            frequency: signupForm.querySelector('select[name="frequency"]').value 
+        };
+        
+        try {
+            const result = await registerUser(userData); // API call
+            if (result && result.message.includes("successfully")) {
+                showError(result.message + " Please login.", signupForm.parentElement, true); // Global success
+                loginTab.click(); // Switch to login tab
+                loginForm.querySelector('input[type="email"]').value = userData.fullName; // Pre-fill username
+            }
+        } catch (error) {
+            showError(error.message, signupForm);
         }
     });
 }
 
-// ==================== DASHBOARD FUNCTIONALITY (Major Changes) ====================
 
-async function initDashboard() { // dashboard.html
+// ==================== DASHBOARD FUNCTIONALITY ====================
+
+function initDashboard() {
+    // Navigation buttons
     document.getElementById('addTransactionBtn')?.addEventListener('click', () => {
         window.location.href = 'transaction.html';
     });
-        
-    document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
-        e.preventDefault();
-        try {
-            await logout(); // Call API logout
-        } catch (error) {
-            // Error already logged in API function, just proceed
-        }
-        updateUserDataInStorage(null); // Clear local storage
-        window.location.href = 'index.html'; // Redirect to landing/login
+    
+    document.getElementById('setSavingsGoalBtn')?.addEventListener('click', () => {
+        window.location.href = 'new_savings.html';
     });
     
-    await updateDashboardData(); // Make it async
+    // Logout button
+    document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        localStorage.removeItem('user');
+        window.location.href = 'index.html';
+    });
+    
+    // Update dashboard data
+    updateDashboard();
 }
 
-async function updateDashboardData() { // dashboard.html - fetches data from backend
-    const username = getCurrentUserUsernameFromStorage();
-    if (!username) {
-        // Should be caught by the checkAuth in DOMContentLoaded, but as a safeguard
+function updateDashboard() {
+    const user = getCurrentUser();
+    if (!user) {
         window.location.href = 'login.html';
         return;
     }
     
-    const userGreetingEl = document.querySelector('.user-greeting h2');
-    if(userGreetingEl) userGreetingEl.textContent = `Welcome back, ${username}!`; // Use stored username
+    // Update user info
+    document.querySelector('.user-greeting h2').textContent = `Welcome back, ${user.username || 'User'}!`;
     
-    try {
-        const balanceSummary = await getCurrentBalanceSummary(); // API call from userApi.js
-        if (balanceSummary) {
-            const overviewMsgEl = document.querySelector('.overview-message');
-            if(overviewMsgEl) overviewMsgEl.textContent = `Here's your financial overview for ${balanceSummary.cyclePeriod || 'the current period'}`;
-
-            const metrics = document.querySelectorAll('.metric-card .metric-value');
-            if (metrics.length === 3) {
-                metrics[0].textContent = `₦${parseFloat(balanceSummary.totalIncome || 0).toFixed(2)}`;
-                metrics[1].textContent = `₦${parseFloat(balanceSummary.totalExpenses || 0).toFixed(2)}`;
-                metrics[2].textContent = `₦${parseFloat(balanceSummary.currentBalance || 0).toFixed(2)}`;
-            }
-
-            // Update recent transactions list from balanceSummary.recentTransactions
-            updateTransactionsList(balanceSummary.recentTransactions || []);
-        } else {
-             showError('Could not load dashboard data.');
-        }
-    } catch (error) {
-        showError(error.message || 'Failed to load dashboard data.');
-        // Potentially redirect to login if auth error (e.g., session expired)
-        if (error.message.toLowerCase().includes('unauthorized') || error.message.toLowerCase().includes('failed to fetch')) {
-             // The checkAuth() should handle this more gracefully.
-        }
+    // Update metrics
+    if (user.currentCycle) {
+        document.querySelectorAll('.metric-card')[0].querySelector('.metric-value').textContent = 
+            `₦${user.currentCycle.income?.toFixed(2) || '0.00'}`;
+        document.querySelectorAll('.metric-card')[1].querySelector('.metric-value').textContent = 
+            `₦${user.currentCycle.expenses?.toFixed(2) || '0.00'}`;
+        document.querySelectorAll('.metric-card')[2].querySelector('.metric-value').textContent = 
+            `₦${user.currentCycle.balance?.toFixed(2) || '0.00'}`;
     }
-    // Savings goals are not in MVP backend
-    // updateSavingsGoals(); 
+    
+    // Update transactions
+    updateTransactionsList();
+    
+    // Update savings goals
+    updateSavingsGoals();
 }
 
-function updateTransactionsList(transactions) { // dashboard.html - uses data passed from updateDashboardData
-    const container = document.querySelector('.transactions-list'); // Assumes this exists
-    if (!container) return;
-
-    container.innerHTML = `<h3>Recent Transactions</h3>`; // Clear previous list, keep header
-
-    if (transactions && transactions.length > 0) {
-        transactions.forEach(t => {
-            const item = document.createElement('div');
-            item.className = 'transaction-item';
-            item.innerHTML = `
+function updateTransactionsList() {
+    const user = getCurrentUser();
+    const container = document.querySelector('.transactions-list');
+    if (!user || !container || !user.transactions) return;
+    
+    const transactions = user.transactions.slice(0, 5);
+    container.innerHTML = `
+        <h3>Recent Transactions</h3>
+        ${transactions.length ? transactions.map(t => `
+            <div class="transaction-item">
                 <div>
                     <div class="transaction-category">${t.category || 'Uncategorized'}</div>
-                    <div class="transaction-date">${new Date(t.date).toLocaleDateString()}</div>
+                    <div class="transaction-date">${new Date(t.date).toLocaleDateString() || ''}</div>
                 </div>
-                <div class="transaction-amount ${t.type.toLowerCase() === 'income' ? 'positive' : 'negative'}">
-                    ${t.type.toLowerCase() === 'income' ? '+' : '-'}₦${parseFloat(t.amount || 0).toFixed(2)}
+                <div class="transaction-amount ${t.type === 'income' ? 'positive' : 'negative'}">
+                    ${t.type === 'income' ? '+' : '-'}₦${t.amount?.toFixed(2) || '0.00'}
                 </div>
-            `;
-            container.appendChild(item);
-        });
-    } else {
-        const noTransactionsP = document.createElement('p');
-        noTransactionsP.textContent = 'No recent transactions in this cycle.';
-        container.appendChild(noTransactionsP);
-    }
+            </div>
+        `).join('') : '<p>No transactions yet</p>'}
+    `;
 }
 
-// ==================== TRANSACTION FORM FUNCTIONALITY (Major Changes) ====================
+// ==================== TRANSACTION FUNCTIONALITY ====================
 
-async function initTransactionForm() { // transaction.html
+function initTransactionForm() {
     const form = document.querySelector('.transaction-form');
     if (!form) return;
-
-    // Populate categories dropdown
-    const categorySelect = form.querySelector('select[name="category"]'); // Add name="category" to select in HTML
-    const transactionTypeRadios = form.querySelectorAll('input[name="type"]');
-    let currentType = form.querySelector('input[name="type"]:checked').value;
-
-    async function populateCategories(type) {
-        try {
-            const categories = await getTransactionCategories(type); // API call
-            categorySelect.innerHTML = '<option value="">Select a category</option>'; // Clear existing
-            categories.forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat.value; // e.g., "FOOD"
-                option.textContent = cat.displayName; // e.g., "Food"
-                categorySelect.appendChild(option);
-            });
-        } catch (error) {
-            showError(error.message || 'Failed to load categories.', 'transactionForm');
-        }
-    }
-
-    // Initial population
-    populateCategories(currentType);
-     // Show/hide frequency field based on initial type
-    document.getElementById('frequencyField').style.display = currentType === 'income' ? 'block' : 'none';
-
-
-    // Update categories when transaction type changes
-    transactionTypeRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            currentType = this.value;
-            populateCategories(currentType);
-            // Show/hide frequency field
-            document.getElementById('frequencyField').style.display = currentType === 'income' ? 'block' : 'none';
-        });
-    });
     
     // Set default date
-    const dateInput = form.querySelector('input[type="date"]');
-    if (dateInput) dateInput.valueAsDate = new Date(); // Today
+    form.querySelector('input[type="date"]').valueAsDate = new Date();
     
-    form.addEventListener('submit', async (e) => {
+    // Form submission
+    form.addEventListener('submit', (e) => {
         e.preventDefault();
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalButtonText = submitButton.textContent;
-        submitButton.textContent = 'Submitting...';
-        submitButton.disabled = true;
-
-        const transactionData = {
-            type: currentType.toUpperCase(), // INCOME or EXPENSE
+        
+        const formData = {
+            type: form.querySelector('input[name="type"]:checked').value,
             amount: parseFloat(form.querySelector('input[type="number"]').value),
-            category: categorySelect.value, // This will be the enum string, e.g., "FOOD"
-            date: dateInput.value,
-            description: form.querySelector('textarea').value // Map 'notes' to 'description' for backend
+            category: form.querySelector('select').value,
+            date: form.querySelector('input[type="date"]').value,
+            notes: form.querySelector('textarea').value
         };
-
-        if (transactionData.type === 'INCOME') {
-            const frequencySelect = form.querySelector('select[name="frequency"]');
-            transactionData.incomeFrequency = frequencySelect.value.toUpperCase().replace('-', ''); // e.g. "ONETIME", "WEEKLY", "MONTHLY" - map to backend enum
-             if (transactionData.incomeFrequency === "ONETIME") { // Adjust for backend ENUM
-                transactionData.incomeFrequency = "ONCE";
-            }
-        }
         
         try {
-            await addTransaction(transactionData); // API call from userApi.js
-            alert('Transaction added successfully!');
-            window.location.href = 'dashboard.html';
+            if (addTransaction(formData)) {
+                window.location.href = 'dashboard.html';
+            } else {
+                throw new Error('Failed to add transaction');
+            }
         } catch (error) {
-            showError(error.message || 'Failed to add transaction. Please check your input.', 'transactionForm');
-        } finally {
-            submitButton.textContent = originalButtonText;
-            submitButton.disabled = false;
+            showError(error.message, 'transactionForm');
         }
     });
-
-    const cancelButton = form.querySelector('.cancel-button');
-    if(cancelButton) {
-        cancelButton.addEventListener('click', () => window.location.href = 'dashboard.html');
-    }
 }
 
-// ==================== SAVINGS GOALS FUNCTIONALITY (To be fully implemented later) ====================
-// The userApi.js functions are already commented out or return gracefully.
-// UI initialization for forms might still happen but submission will use the placeholder API calls.
+function addTransaction(transaction) {
+    const user = getCurrentUser();
+    if (!user) return false;
+    
+    // Initialize arrays if they don't exist
+    if (!user.transactions) user.transactions = [];
+    if (!user.currentCycle) {
+        user.currentCycle = {
+            startDate: new Date(),
+            balance: 0,
+            income: 0,
+            expenses: 0
+        };
+    }
+    
+    // Add transaction
+    transaction.id = Date.now();
+    user.transactions.push(transaction);
+    
+    // Update cycle totals
+    if (transaction.type === 'income') {
+        user.currentCycle.income += transaction.amount;
+        user.currentCycle.balance += transaction.amount;
+    } else {
+        user.currentCycle.expenses += transaction.amount;
+        user.currentCycle.balance -= transaction.amount;
+    }
+    
+    updateUserData(user);
+    return true;
+}
 
-function initSavingsGoalForm() { // new_savings.html
+// ==================== SAVINGS GOALS FUNCTIONALITY ====================
+
+function initSavingsGoalForm() {
     const form = document.querySelector('.goal-form');
     if (!form) return;
     
-    // Default date logic can stay
+    // Set default date (3 months from now)
     const dateInput = form.querySelector('input[type="date"]');
-    if (dateInput) {
-      const futureDate = new Date();
-      futureDate.setMonth(futureDate.getMonth() + 3);
-      dateInput.valueAsDate = futureDate;
-    }
+    const futureDate = new Date();
+    futureDate.setMonth(futureDate.getMonth() + 3);
+    dateInput.valueAsDate = futureDate;
     
-    form.addEventListener('submit', async (e) => {
+    // Form submission
+    form.addEventListener('submit', (e) => {
         e.preventDefault();
-        const goalData = { /* ... get form data ... */ };
+        
+        const formData = {
+            name: form.querySelector('input[type="text"]').value,
+            targetAmount: parseFloat(form.querySelector('input[type="number"]').value),
+            category: form.querySelector('select').value,
+            targetDate: form.querySelector('input[type="date"]').value,
+            isLocked: form.querySelector('input[type="checkbox"]').checked
+        };
+        
         try {
-            // This will call the placeholder createSavingsGoal from userApi.js
-            await createSavingsGoal(goalData); 
-            alert('Savings Goal functionality not fully implemented in backend MVP.');
-            // window.location.href = 'saving_goal.html'; // Don't redirect yet
+            if (addSavingsGoal(formData)) {
+                window.location.href = 'saving_goal.html';
+            } else {
+                throw new Error('Failed to create savings goal');
+            }
         } catch (error) {
-            showError(error.message || 'Failed to create savings goal (Not implemented in backend).', 'goalForm');
+            showError(error.message, 'goalForm');
         }
     });
 }
 
-function updateSavingsGoals() { // saving_goal.html
-    // This will likely show an empty list or warning due to placeholder getSavingsGoals()
-    console.warn("Savings Goals UI update called, but backend functionality is placeholder.");
+function addSavingsGoal(goal) {
+    const user = getCurrentUser();
+    if (!user) return false;
+    
+    if (!user.savingsGoals) user.savingsGoals = [];
+    
+    goal.id = Date.now();
+    goal.currentAmount = 0;
+    goal.createdAt = new Date().toISOString();
+    user.savingsGoals.push(goal);
+    
+    updateUserData(user);
+    return true;
+}
+
+function updateSavingsGoals() {
+    const user = getCurrentUser();
     const container = document.querySelector('.goals-grid');
-    if (container) {
-        container.innerHTML = "<p>Savings Goals feature is under development.</p>";
+    if (!user || !container || !user.savingsGoals) return;
+    
+    container.innerHTML = user.savingsGoals.map(goal => `
+        <div class="goal-card">
+            <div class="goal-icon">${getGoalIcon(goal.category)}</div>
+            <h3 class="goal-title">${goal.name}</h3>
+            <p class="goal-target">Target: ₦${goal.targetAmount?.toFixed(2) || '0.00'}</p>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: ${(goal.currentAmount / goal.targetAmount * 100) || 0}%"></div>
+            </div>
+
+            <div class="goal-progress">
+                <span class="current-amount">₦${goal.currentAmount?.toFixed(2) || '0.00'}</span>
+                <span class="percentage">${Math.round((goal.currentAmount / goal.targetAmount * 100) || 0)}%</span>
+            </div>
+
+            <button class="add-to-goal" data-id="${goal.id}">Add to Goal</button>
+        </div>
+    `).join('');
+    
+    // Add event listeners to buttons
+    document.querySelectorAll('.add-to-goal').forEach(button => {
+        button.addEventListener('click', function() {
+            const amount = parseFloat(prompt("Enter amount to add:"));
+            if (!isNaN(amount) && amount > 0) {
+                addToSavingsGoal(this.dataset.id, amount);
+                updateSavingsGoals();
+            }
+        });
+    });
+}
+
+function addToSavingsGoal(goalId, amount) {
+    const user = getCurrentUser();
+    if (!user || !user.savingsGoals) return false;
+    
+    const goal = user.savingsGoals.find(g => g.id.toString() === goalId.toString());
+    if (!goal) return false;
+    
+    goal.currentAmount += amount;
+    updateUserData(user);
+    return true;
+}
+
+function getGoalIcon(category) {
+    const icons = {
+        'emergency': '🛡️',
+        'vehicle': '🚗',
+        'housing': '🏠',
+        'education': '🎓',
+        'travel': '✈️'
+    };
+    return icons[category.toLowerCase()] || '💰';
+}
+
+// ==================== CYCLE MANAGEMENT ====================
+
+function checkCycleReset() {
+    const user = getCurrentUser();
+    if (!user || !user.frequency || !user.currentCycle) return;
+    
+    const now = new Date();
+    const lastReset = new Date(user.currentCycle.startDate);
+    let needsReset = false;
+    
+    if (user.frequency === "WEEKLY") {
+        needsReset = getWeekNumber(now) !== getWeekNumber(lastReset);
+    } else if (user.frequency === "BIWEEKLY") {
+        const diffDays = Math.floor((now - lastReset) / (1000 * 60 * 60 * 24));
+        needsReset = diffDays >= 14;
+    } else { // MONTHLY
+        needsReset = now.getMonth() !== lastReset.getMonth();
+    }
+    
+    if (needsReset) {
+        user.currentCycle = {
+            startDate: now,
+            balance: 0,
+            income: 0,
+            expenses: 0
+        };
+        updateUserData(user);
     }
 }
 
-// The getGoalIcon can stay as a UI utility
+function getWeekNumber(date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+    const week1 = new Date(d.getFullYear(), 0, 4);
+    return 1 + Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+}
 
-// ==================== CYCLE MANAGEMENT (Client-side logic, might be simplified or removed if backend manages all cycle state) ====================
-// Your backend now determines the current cycle via CycleService for balance.
-// Client-side `checkCycleReset` based on localStorage is no longer the source of truth for balance.
-// We can remove `checkCycleReset` and its callers for now, as dashboard will fetch current cycle from backend.
-// function checkCycleReset() { ... }
-// function getWeekNumber(date) { ... }
+// ==================== INITIALIZATION ====================
 
-// ==================== INITIALIZATION (Major Changes) ====================
-
-document.addEventListener('DOMContentLoaded', async function() { // Make DOMContentLoaded async
-    const path = window.location.pathname;
-    const isAuthPage = path.includes('login.html') || path === '/' || path.endsWith('/index.html');
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if user is logged in for protected pages
+    const user = getCurrentUser();
+    const isAuthPage = window.location.pathname.includes('login.html') || 
+                      window.location.pathname.includes('index.html');
     
-    let currentUser = null;
-    try {
-        const authData = await checkAuth(); // API call to check auth status
-        if (authData && authData.username) {
-            currentUser = authData; // Contains { username: '...' }
-            updateUserDataInStorage(currentUser.username); // Store username
-        } else {
-            updateUserDataInStorage(null); // Clear storage if not authenticated
-        }
-    } catch (e) {
-        // checkAuth in userApi.js already logs errors, clear local storage
-        updateUserDataInStorage(null);
-    }
-    
-    if (!currentUser && !isAuthPage) {
-        // Not logged in and not on a public page, redirect to login
+    if (!user && !isAuthPage) {
         window.location.href = 'login.html';
-        return; // Stop further execution for this page
-    } else if (currentUser && isAuthPage && !path.includes('index.html')) {
-        // Logged in and trying to access login/signup page (but not index.html which is public landing)
-        // Redirect to dashboard
-        // Allow index.html to be viewed by logged-in users without redirect
-        window.location.href = 'dashboard.html';
         return;
     }
-
-    // User menu display with avatar initial
-    const userAvatarDiv = document.querySelector('.user-menu .user-avatar');
-    if (userAvatarDiv && currentUser && currentUser.username) {
-        userAvatarDiv.textContent = currentUser.username.charAt(0).toUpperCase();
-    } else if (userAvatarDiv) {
-        userAvatarDiv.textContent = ''; // Or a default guest icon
-    }
-
-    const userMenu = document.querySelector('.user-menu');
-    const dropdownMenu = document.querySelector('.dropdown-menu');
-
-    if (userMenu && dropdownMenu) {
-        if(currentUser){ // Show user menu only if logged in
-            userMenu.style.display = 'flex'; // Or 'block' depending on your CSS
-            userMenu.addEventListener('click', (event) => {
-                event.stopPropagation(); // Prevent click from closing menu immediately
-                dropdownMenu.classList.toggle('show');
-            });
-
-            // Close dropdown if clicked outside
-            window.addEventListener('click', (event) => {
-                if (!userMenu.contains(event.target)) {
-                    dropdownMenu.classList.remove('show');
-                }
-            });
-        } else {
-            userMenu.style.display = 'none';
-        }
-    }
-
-
+    
     // Initialize page-specific functionality
-    if (path.includes('login.html')) {
+    if (window.location.pathname.includes('login.html')) {
         initAuthForms();
-    } else if (path.includes('dashboard.html') && currentUser) {
-        initDashboard(); // Will call updateDashboardData which fetches from backend
-    } else if (path.includes('transaction.html') && currentUser) {
-        initTransactionForm(); // Will fetch categories
-    } else if (path.includes('new_savings.html') && currentUser) {
-        initSavingsGoalForm(); // Will use placeholder API
-    } else if (path.includes('saving_goal.html') && currentUser) {
-        updateSavingsGoals(); // Will use placeholder API
+    } else if (window.location.pathname.includes('dashboard.html')) {
+        initDashboard();
+    } else if (window.location.pathname.includes('transaction.html')) {
+        initTransactionForm();
+    } else if (window.location.pathname.includes('new_savings.html')) {
+        initSavingsGoalForm();
+    } else if (window.location.pathname.includes('saving_goal.html')) {
+        updateSavingsGoals();
     }
     
-    // Cycle reset is now handled by backend logic for balance summary.
-    // No explicit client-side checkCycleReset() needed for core functionality.
+    // Check for cycle reset on all pages
+    checkCycleReset();
 });
