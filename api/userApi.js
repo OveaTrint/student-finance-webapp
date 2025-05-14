@@ -3,58 +3,53 @@ const API_BASE_URL = 'http://localhost:8080/api'; // Ensure backend runs on 8080
 
 // ==================== AUTHENTICATION FUNCTIONS ====================
 
-async function loginUser(emailOrUsername, password) { // Parameter renamed for clarity
-    console.log("DEBUG userApi.js: loginUser called with:", emailOrUsername);
+async function loginUser(emailOrUsername, password) {
+    console.log("DEBUG userApi.js: loginUser called with username:", emailOrUsername);
     try {
-         console.log("DEBUG userApi.js: Preparing to fetch for login...");
-         const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        console.log("DEBUG userApi.js: Preparing to fetch for login...");
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
-            credentials: 'include',
+            credentials: 'include', // Crucial for cookies
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                username: emailOrUsername, // Backend expects 'username'
+                username: emailOrUsername,
                 password: password
             })
         });
-        console.log("DEBUG userApi.js: Fetch call completed. Response status:", response.status);
+        console.log("DEBUG userApi.js: loginUser - Fetch call completed. Response status:", response.status);
 
         if (!response.ok) {
-            // Try to parse error, default to status text if parsing fails
-            let errorMsg = `Login failed: ${response.statusText}`;
+            let errorMsg = `Login failed: ${response.status} ${response.statusText}`;
             try {
-                const errorData = await response.json();
-                errorMsg = errorData.message || errorData.error || errorMsg;
-            } catch (e) { /* Ignore parsing error, use statusText */ }
+                const errorBody = await response.text();
+                try {
+                    const errorData = JSON.parse(errorBody);
+                    errorMsg = errorData.message || errorData.error || errorBody;
+                } catch (jsonParseError) { errorMsg = errorBody || errorMsg; }
+            } catch (readError) { /* Keep original errorMsg */ }
             throw new Error(errorMsg);
         }
 
-        const authResponse = await response.json(); // Expects AuthResponse { message, username }
-
-        // After successful login, fetch full user details IF backend /api/auth/user is enhanced.
-        // For now, we'll just use the username from AuthResponse and store minimal info.
-        // If backend /api/auth/user is enhanced to return UserDto with more details:
-        // const userDetails = await fetchCurrentUserFromServer();
-        // localStorage.setItem('user', JSON.stringify(userDetails));
-        // return userDetails;
-
-        // Current limited approach:
-        const minimalUser = { username: authResponse.username };
+        const authResponse = await response.json();
+        console.log("DEBUG userApi.js: loginUser - AuthResponse from server:", authResponse);
+        const minimalUser = { username: authResponse.username }; // Store only username for now
         localStorage.setItem('user', JSON.stringify(minimalUser));
         return minimalUser;
 
     } catch (error) {
-         console.error('DEBUG userApi.js: Error in loginUser:', error);
-        console.error('Login error:', error);
-        throw error;
+        console.error('DEBUG userApi.js: Error in loginUser:', error);
+        // The original console.error('Login error:', error); might be redundant if this one catches it.
+        throw error; // Re-throw for script.js to handle
     }
 }
 
 async function registerUser(userData) {
+    console.log("DEBUG userApi.js: registerUser called with data:", userData);
     try {
         if (userData.password !== userData.confirmPassword) {
-            throw new Error('Passwords do not match');
+            throw new Error('Passwords do not match'); // Fail early
         }
 
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -64,98 +59,102 @@ async function registerUser(userData) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                username: userData.username, 
+                username: userData.username, // Ensure script.js provides userData.username
                 password: userData.password,
-                allowanceCycleFrequency: userData.frequency.toUpperCase() // e.g., "MONTHLY"
+                allowanceCycleFrequency: userData.frequency.toUpperCase()
             })
         });
+        console.log("DEBUG userApi.js: registerUser - Response status:", response.status);
 
         if (!response.ok) {
-            let errorMsg = `Registration failed: ${response.statusText}`;
+            let errorMsg = `Registration failed: ${response.status} ${response.statusText}`;
             try {
-                // Backend register can return plain text error on bad request
-                const errorText = await response.text();
-                errorMsg = errorText || errorMsg;
-                if (errorText.includes("Username is already taken")) {
+                const errorBody = await response.text();
+                try {
+                    const errorData = JSON.parse(errorBody);
+                    errorMsg = errorData.message || errorData.error || errorBody;
+                } catch (jsonParseError) { errorMsg = errorBody || errorMsg; }
+
+                if (errorMsg.toLowerCase().includes("username is already taken")) {
                    errorMsg = "Username is already taken!";
                 }
-            } catch (e) { /* Ignore parsing error */ }
+            } catch (readError) { /* Keep original errorMsg */ }
             throw new Error(errorMsg);
         }
 
-        const authResponse = await response.json(); // Expects AuthResponse { message, username }
-        // No user data (like full User object) is returned directly, just a success message and username.
-        // User will need to login separately.
-        return authResponse; // Contains { message, username }
+        const authResponse = await response.json();
+        console.log("DEBUG userApi.js: registerUser - AuthResponse from server:", authResponse);
+        return authResponse;
 
     } catch (error) {
-        console.error('Registration error:', error);
+        console.error('DEBUG userApi.js: Error in registerUser:', error);
         throw error;
     }
 }
 
-async function fetchCurrentUserFromServer() { // Renamed to be more specific
+async function fetchCurrentUserFromServer() {
+    console.log("DEBUG userApi.js: fetchCurrentUserFromServer called");
     try {
         const response = await fetch(`${API_BASE_URL}/auth/user`, {
             credentials: 'include'
         });
+        console.log("DEBUG userApi.js: fetchCurrentUserFromServer - Response status:", response.status);
 
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
-                localStorage.removeItem('user');
+                localStorage.removeItem('user'); // Clear local user if unauthorized
             }
+            // Potentially throw an error or return a specific value indicating failure
             return null;
         }
 
-        const data = await response.json();
-        // CURRENT BACKEND returns AuthResponse { message, username }
-        // IDEAL BACKEND would return UserDto { id, username, allowanceCycleFrequency, ... }
-        // Storing whatever is returned. If it's just AuthResponse, that's what localStorage gets.
-        // This means `getLocalStoredUser()` will primarily have just the username.
+        const data = await response.json(); // Expects AuthResponse { message, username }
+        // Or an enhanced UserDto if backend /api/auth/user is changed
         localStorage.setItem('user', JSON.stringify(data.username ? { username: data.username } : data));
         return data.username ? { username: data.username } : data;
 
     } catch (error) {
-        console.error('Fetch current user error:', error);
+        console.error('DEBUG userApi.js: Error in fetchCurrentUserFromServer:', error);
         localStorage.removeItem('user');
         return null;
     }
 }
 
 async function logoutUser() {
+    console.log("DEBUG userApi.js: logoutUser called");
     try {
-        await fetch(`${API_BASE_URL}/auth/logout`, {
+        const response = await fetch(`${API_BASE_URL}/auth/logout`, {
             method: 'POST',
             credentials: 'include'
         });
+        console.log("DEBUG userApi.js: logoutUser - API call status:", response.status);
     } catch (error) {
-        console.error('Logout error:', error);
+        console.error('DEBUG userApi.js: Error in logoutUser API call:', error);
+        // Still proceed to finally block to clear local storage
     } finally {
         localStorage.removeItem('user');
+        console.log("DEBUG userApi.js: 'user' removed from localStorage during logout.");
     }
 }
 
 // ==================== TRANSACTION FUNCTIONS ====================
 
 async function addApiTransaction(transactionData) {
+    console.log("DEBUG userApi.js: addApiTransaction called with raw data:", transactionData);
     try {
+        // transactionData.category will be the enum name string like "SALARY", "FOOD"
+        // from the value attribute of the <select> in transaction.html
         const payload = {
-            type: transactionData.type.toUpperCase(), // "INCOME" or "EXPENSE"
+            type: transactionData.type.toUpperCase(),
             amount: transactionData.amount,
-            // 'description' field in DTO maps to frontend 'notes'
-            description: transactionData.notes || transactionData.category, // Default to category if notes empty
-            category: transactionData.category.toUpperCase().replace(/ /g, "_"), // Use lowercase 'g' for global flag
-            date: transactionData.date, // Expects YYYY-MM-DD
-            incomeFrequency: null // Default to null
+            description: transactionData.notes || '', // Use notes for description; empty string if no notes
+            category: transactionData.category,      // This is the enum name string, e.g., "FOOD"
+            date: transactionData.date,
+            incomeFrequency: (transactionData.type.toUpperCase() === 'INCOME' && transactionData.incomeFrequency)
+                                ? transactionData.incomeFrequency.toUpperCase() // Should be "ONCE", "WEEKLY", "MONTHLY"
+                                : null
         };
-
-        if (payload.type === 'INCOME' && transactionData.incomeFrequency) {
-            // Map frontend 'one-time' etc. to backend 'ONCE'
-            let backendFrequency = transactionData.incomeFrequency.toUpperCase();
-            if (backendFrequency === "ONE-TIME") backendFrequency = "ONCE";
-            payload.incomeFrequency = backendFrequency;
-        }
-
+        console.log("DEBUG userApi.js: Payload for POST /api/transactions:", payload);
 
         const response = await fetch(`${API_BASE_URL}/transactions`, {
             method: 'POST',
@@ -165,48 +164,61 @@ async function addApiTransaction(transactionData) {
             },
             body: JSON.stringify(payload)
         });
+        console.log("DEBUG userApi.js: addApiTransaction - Response status:", response.status);
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: `Failed to add transaction (status ${response.status})` }));
-            throw new Error(errorData.message || 'Failed to add transaction');
+            let errorMsg = `Failed to add transaction: ${response.status} ${response.statusText}`;
+            try {
+                const errorBody = await response.text();
+                try {
+                    const errorData = JSON.parse(errorBody);
+                    errorMsg = errorData.message || errorData.error || errorBody;
+                } catch (jsonParseError) { errorMsg = errorBody || errorMsg; }
+            } catch (readError) { /* Keep original errorMsg */ }
+            throw new Error(errorMsg);
         }
-
-        return await response.json(); // Backend returns the created TransactionDto
+        return await response.json();
     } catch (error) {
-        console.error('Add transaction error:', error);
+        console.error('DEBUG userApi.js: Error in addApiTransaction:', error);
         throw error;
     }
 }
 
-async function fetchAllTransactionsForUser() { // Renamed for clarity
+async function fetchAllTransactionsForUser() {
+    console.log("DEBUG userApi.js: fetchAllTransactionsForUser called");
     try {
-        const response = await fetch(`${API_BASE_URL}/transactions`, { // Gets all transactions for the user
+        const response = await fetch(`${API_BASE_URL}/transactions`, {
             credentials: 'include'
         });
+        console.log("DEBUG userApi.js: fetchAllTransactionsForUser - Response status:", response.status);
 
         if (!response.ok) {
-            throw new Error('Failed to fetch transactions');
+            // Similar error handling as above
+            throw new Error(`Failed to fetch transactions: ${response.status} ${response.statusText}`);
         }
-        return await response.json(); // Returns List<TransactionDto>
+        return await response.json();
     } catch (error) {
-        console.error('Error fetching all transactions:', error);
-        return [];
+        console.error('DEBUG userApi.js: Error in fetchAllTransactionsForUser:', error);
+        return []; // Return empty array on error so UI doesn't break
     }
 }
 
-async function fetchTransactionCategoriesApi(type = null) { // Renamed for clarity
+async function fetchTransactionCategoriesApi(type = null) {
+    console.log("DEBUG userApi.js: fetchTransactionCategoriesApi called with type:", type);
     try {
         let url = `${API_BASE_URL}/transactions/categories`;
         if (type) {
-            url += `?type=${type.toLowerCase()}`; // "income" or "expense"
+            url += `?type=${type.toLowerCase()}`;
         }
         const response = await fetch(url, { credentials: 'include' });
+        console.log("DEBUG userApi.js: fetchTransactionCategoriesApi - Response status:", response.status);
+
         if (!response.ok) {
-            throw new Error('Failed to fetch transaction categories');
+            throw new Error(`Failed to fetch transaction categories: ${response.status} ${response.statusText}`);
         }
-        return await response.json(); // Expects List<CategoryDto> { value, displayName }
+        return await response.json();
     } catch (error) {
-        console.error('Error fetching transaction categories:', error);
+        console.error('DEBUG userApi.js: Error in fetchTransactionCategoriesApi:', error);
         return [];
     }
 }
@@ -214,42 +226,53 @@ async function fetchTransactionCategoriesApi(type = null) { // Renamed for clari
 // ==================== BALANCE/CYCLE FUNCTIONS ====================
 
 async function fetchCycleSummaryApi() {
-    console.log("DEBUG userApi.js: fetchCycleSummaryApi called"); // A
+    console.log("DEBUG userApi.js: fetchCycleSummaryApi called");
     try {
         const response = await fetch(`${API_BASE_URL}/balance/current`, {
-            credentials: 'include'
+            method: 'GET', // Explicit
+            credentials: 'include' // Crucial for sending JSESSIONID
         });
-        console.log("DEBUG userApi.js: fetchCycleSummaryApi response status:", response.status); // B
+        console.log("DEBUG userApi.js: fetchCycleSummaryApi - Response status:", response.status);
 
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
-                console.error("DEBUG userApi.js: fetchCycleSummaryApi - Unauthorized/Forbidden. Session might have expired."); // C
-                // await logoutUser(); // logoutUser is called by the catcher in script.js
-                throw new Error('Session expired or unauthorized. Please log in again.'); // D
+                console.error("DEBUG userApi.js: fetchCycleSummaryApi - Unauthorized/Forbidden (status " + response.status + "). Session might have expired.");
+                throw new Error('Session expired or unauthorized. Please log in again.');
             }
-            const errorData = await response.json().catch(() => ({ message: `Failed to fetch summary (status ${response.status})` }));
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            let errorMsg = `Failed to fetch summary: ${response.status} ${response.statusText}`;
+            try {
+                const errorBody = await response.text();
+                 try {
+                    const errorData = JSON.parse(errorBody);
+                    errorMsg = errorData.message || errorData.error || errorBody;
+                } catch (jsonParseError) { errorMsg = errorBody || errorMsg; }
+            } catch (readError) { /* Keep original errorMsg */ }
+            throw new Error(errorMsg);
         }
         return await response.json();
     } catch (error) {
-        console.error('DEBUG userApi.js: Error in fetchCycleSummaryApi:', error); // E
+        console.error('DEBUG userApi.js: Error in fetchCycleSummaryApi:', error);
         throw error;
     }
 }
 
-// ==================== UTILITY FUNCTION ====================
+// ==================== UTILITY FUNCTION (if not defined in script.js or if script.js uses this one) ====================
+// It's good practice to have this defined in only one place.
+// If script.js loads userApi.js first, script.js can use userApi.getLocalStoredUser().
+// If script.js has its own, make sure they are consistent or remove one.
+/*
 function getLocalStoredUser() {
+    console.log("DEBUG userApi.js: getLocalStoredUser called");
     const userString = localStorage.getItem('user');
     if (userString) {
         try {
             return JSON.parse(userString);
-            // This will currently return { username: "actual_username" }
-            // Or, if /api/auth/user is enhanced, it will return the full UserDto
         } catch (e) {
-            console.error("Error parsing user from localStorage", e);
-            localStorage.removeItem('user'); // Clear corrupted data
+            console.error("DEBUG userApi.js: Error parsing user from localStorage", e);
+            localStorage.removeItem('user');
             return null;
         }
     }
     return null;
 }
+*/
