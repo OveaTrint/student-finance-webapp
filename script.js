@@ -1,8 +1,6 @@
 // ==================== UTILITY FUNCTIONS ====================
 
-function getLocalStoredUser() { // Re-defined here for self-containment, but ideally from userApi.js
-    // If userApi.js is loaded first and defines this, you can remove this duplicate.
-    // For now, to ensure script.js can run independently for this part if needed:
+function getLocalStoredUser() {
     const userString = localStorage.getItem('user');
     if (userString) {
         try {
@@ -16,8 +14,6 @@ function getLocalStoredUser() { // Re-defined here for self-containment, but ide
     return null;
 }
 
-// This function is less critical now for dashboard data, as data comes from API
-// but might be used if you store some local preferences.
 function updateUserData(user) { // For localStorage based savings goals
     localStorage.setItem('user', JSON.stringify(user));
 }
@@ -35,17 +31,17 @@ function showError(message, elementOrId = null) {
     }
 
     if (targetElement) {
-        const form = targetElement.closest('form') || targetElement; // Prefer placing in form
+        const form = targetElement.closest('form') || targetElement;
         if (form) {
             const existingError = form.querySelector('.error-message');
             if (existingError) existingError.remove();
             form.prepend(errorElement);
-        } else { // Fallback if no form or specific container found
+        } else {
             const existingGlobalError = document.body.querySelector('.error-message:not(form .error-message)');
             if(existingGlobalError) existingGlobalError.remove();
             document.body.prepend(errorElement);
         }
-    } else { // Global error if no target
+    } else {
         const existingGlobalError = document.body.querySelector('.error-message:not(form .error-message)');
         if(existingGlobalError) existingGlobalError.remove();
         document.body.prepend(errorElement);
@@ -53,9 +49,6 @@ function showError(message, elementOrId = null) {
 
     setTimeout(() => errorElement.remove(), 5000);
 }
-
-// ==================== DOM ELEMENT INTERACTIONS (GENERAL) ====================
-// Moved to run within DOMContentLoaded to ensure elements exist
 
 // ==================== AUTHENTICATION & FORM HANDLING ====================
 
@@ -71,8 +64,8 @@ function initAuthForms() {
 
     const loginTab = document.getElementById('loginTab');
     const signupTab = document.getElementById('signupTab');
-    const loginForm = document.getElementById('loginForm'); // Assumes <form id="loginForm">
-    const signupForm = document.getElementById('signupForm'); // Assumes <form id="signupForm">
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
 
     if (!loginTab || !signupTab || !loginForm || !signupForm) {
         console.error("DEBUG script.js: Auth form elements (tabs or forms) NOT FOUND!");
@@ -112,11 +105,8 @@ function initAuthForms() {
         console.log("DEBUG script.js: Login form submitted!");
         e.preventDefault();
 
-        // Assumes <input type="text" id="loginUsernameInput"> in login.html
         const usernameInputEl = document.getElementById('loginUsernameInput') || loginForm.querySelector('input[type="text"]');
-        // Assumes <input type="password" id="loginPasswordInput"> in login.html
         const passwordInputEl = document.getElementById('loginPasswordInput') || loginForm.querySelector('input[type="password"]');
-
 
         if (!usernameInputEl || !passwordInputEl) {
             console.error("DEBUG script.js: Username or password input field not found in login form!");
@@ -151,8 +141,6 @@ function initAuthForms() {
         e.preventDefault();
         const passwords = signupForm.querySelectorAll('input[type="password"]');
 
-        // Assumes <input type="text" id="signupFullNameInput"> in login.html
-        // Assumes <input type="text" id="signupUsernameInput"> in login.html
         const fullNameValue = document.getElementById('signupFullNameInput')?.value || '';
         const usernameValue = document.getElementById('signupUsernameInput')?.value || '';
         const passwordValue = passwords[0]?.value || '';
@@ -179,13 +167,13 @@ function initAuthForms() {
 
         try {
             console.log("DEBUG script.js: Attempting to call registerUser API function (from userApi.js)...");
-            const result = await registerUser(userData); // from userApi.js (ensure it sends userData.username)
+            const result = await registerUser(userData); // from userApi.js
             console.log("DEBUG script.js: API call registerUser completed. Response from API:", result);
 
             if (result && result.message && result.message.toLowerCase().includes("successfully")) {
                 showError(result.message + " Please login.", signupForm.parentElement, true);
                 loginTab.click();
-                const loginUsernameField = document.getElementById('loginUsernameInput'); // Assumes ID on login form
+                const loginUsernameField = document.getElementById('loginUsernameInput');
                 if (loginUsernameField) {
                     loginUsernameField.value = userData.username;
                 } else {
@@ -217,11 +205,12 @@ async function populateDashboardData() {
         return;
     }
 
+    // User greeting is updated here as well, ensuring it's based on the latest from localStorage
     const userGreetingElement = document.querySelector('.user-greeting h2');
     if (userGreetingElement) {
         userGreetingElement.textContent = `Welcome back, ${localUser.username}!`;
     } else {
-        console.warn("DEBUG script.js: .user-greeting h2 element not found.");
+        console.warn("DEBUG script.js: .user-greeting h2 element not found for dashboard.");
     }
 
     try {
@@ -247,6 +236,35 @@ async function populateDashboardData() {
             if (overviewMessageEl && cycleSummary.cyclePeriod) overviewMessageEl.textContent = `Here's your financial overview for ${cycleSummary.cyclePeriod}`;
             else console.warn("DEBUG script.js: Overview message element or cyclePeriod data not found.");
 
+            const incomeChangeEl = document.querySelector('.metrics-grid .metric-card:nth-child(1) .metric-change');
+            const expenseChangeEl = document.querySelector('.metrics-grid .metric-card:nth-child(2) .metric-change');
+            const balanceChangeEl = document.querySelector('.metrics-grid .metric-card:nth-child(3) .metric-change');
+
+            if (incomeChangeEl) {
+                if (cycleSummary.totalIncome != null && cycleSummary.totalIncome > 0) {
+                    incomeChangeEl.textContent = 'Income recorded this cycle';
+                    incomeChangeEl.className = 'metric-change positive';
+                } else {
+                    incomeChangeEl.textContent = 'No income this cycle';
+                    incomeChangeEl.className = 'metric-change';
+                }
+            } else { console.warn("DEBUG script.js: Income Change element not found."); }
+
+            if (expenseChangeEl) {
+                if (cycleSummary.totalExpenses != null && cycleSummary.totalExpenses > 0) {
+                    expenseChangeEl.textContent = 'Expenses recorded this cycle';
+                    expenseChangeEl.className = 'metric-change negative';
+                } else {
+                    expenseChangeEl.textContent = 'No expenses this cycle';
+                    expenseChangeEl.className = 'metric-change';
+                }
+            } else { console.warn("DEBUG script.js: Expense Change element not found."); }
+
+            if (balanceChangeEl) {
+                balanceChangeEl.textContent = 'Available to spend';
+                balanceChangeEl.className = 'metric-change';
+            } else { console.warn("DEBUG script.js: Balance Change element not found."); }
+
             if (cycleSummary.recentTransactions && cycleSummary.recentTransactions.length > 0) {
                 console.log("DEBUG script.js: Updating transactions list with data from cycleSummary:", cycleSummary.recentTransactions);
                 updateTransactionsListDisplay(cycleSummary.recentTransactions);
@@ -271,7 +289,7 @@ async function populateDashboardData() {
 
 function updateTransactionsListDisplay(transactions) {
     console.log("DEBUG script.js: updateTransactionsListDisplay called with:", transactions);
-    const container = document.querySelector('.transactions-list'); // In dashboard.html
+    const container = document.querySelector('.transactions-list');
 
     if (!container) {
         console.error("DEBUG script.js: .transactions-list container not found in dashboard.html!");
@@ -314,9 +332,9 @@ function updateTransactionsListDisplay(transactions) {
 
 function initDashboardEventListeners() {
     console.log("DEBUG script.js: initDashboardEventListeners called");
-    const addTransactionBtn = document.getElementById('addTransactionBtn'); // Assumes <button id="addTransactionBtn">
-    const setSavingsGoalBtn = document.getElementById('setSavingsGoalBtn'); // Assumes <button id="setSavingsGoalBtn">
-    const logoutBtn = document.getElementById('logoutBtn'); // Assumes <a href="#" id="logoutBtn">
+    const addTransactionBtn = document.getElementById('addTransactionBtn');
+    const setSavingsGoalBtn = document.getElementById('setSavingsGoalBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
 
     if (addTransactionBtn) {
         addTransactionBtn.addEventListener('click', () => {
@@ -327,9 +345,8 @@ function initDashboardEventListeners() {
     if (setSavingsGoalBtn) {
         setSavingsGoalBtn.addEventListener('click', () => {
             alert("Set Savings Goal functionality not fully implemented with API yet.");
-            // window.location.href = 'new_savings.html'; // Your HTML had this button commented out
         });
-    } else { console.warn("DEBUG script.js: setSavingsGoalBtn not found (ensure it has the ID and is not commented out if needed)"); }
+    } else { console.warn("DEBUG script.js: setSavingsGoalBtn not found (ensure it has the ID and is not commented out in HTML)"); }
 
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
@@ -341,7 +358,7 @@ function initDashboardEventListeners() {
                 window.location.href = 'index.html';
             } catch (error) {
                 console.error("DEBUG script.js: Error during logout:", error);
-                localStorage.removeItem('user'); // Ensure local cleanup
+                localStorage.removeItem('user');
                 window.location.href = 'index.html';
             }
         });
@@ -352,7 +369,7 @@ function initDashboardEventListeners() {
 
 function initTransactionForm() {
     console.log("DEBUG script.js: initTransactionForm called");
-    const form = document.querySelector('.transaction-form'); // Assumes <form class="transaction-form">
+    const form = document.querySelector('.transaction-form');
     if (!form) {
         console.warn("DEBUG script.js: Transaction form not found on this page.");
         return;
@@ -364,7 +381,7 @@ function initTransactionForm() {
     }
 
     const transactionTypeRadios = form.querySelectorAll('input[name="type"]');
-    const frequencyField = document.getElementById('frequencyField'); // Assumes <div id="frequencyField">
+    const frequencyField = document.getElementById('frequencyField');
 
     function toggleFrequencyField() {
         if (frequencyField) {
@@ -386,7 +403,7 @@ function initTransactionForm() {
 
         const type = form.querySelector('input[name="type"]:checked')?.value;
         const amount = parseFloat(form.querySelector('input[type="number"]')?.value);
-        const category = form.querySelector('select')?.value; // This is the display name like "Salary"
+        const category = form.querySelector('#transactionCategorySelect')?.value; // Uses ID
         const dateValue = form.querySelector('input[type="date"]')?.value;
         const notes = form.querySelector('textarea')?.value || '';
         let incomeFrequency = null;
@@ -426,7 +443,7 @@ function initTransactionForm() {
         }
     });
 
-    const cancelButton = form.querySelector('.cancel-button'); // Assumes <button class="cancel-button">
+    const cancelButton = form.querySelector('.cancel-button');
     if (cancelButton) {
         cancelButton.addEventListener('click', () => {
             window.location.href = 'dashboard.html';
@@ -435,10 +452,9 @@ function initTransactionForm() {
 }
 
 // ==================== SAVINGS GOALS FUNCTIONALITY (Still localStorage based) ====================
-// Kept as per your existing script, modify for API later if needed.
 function initSavingsGoalForm() {
     console.log("DEBUG script.js: initSavingsGoalForm called (localStorage based)");
-    const form = document.querySelector('.goal-form'); // Assumes <form class="goal-form"> on new_savings.html
+    const form = document.querySelector('.goal-form');
     if (!form) return;
 
     const dateInput = form.querySelector('input[type="date"]');
@@ -462,37 +478,33 @@ function initSavingsGoalForm() {
             return;
         }
         try {
-            if (addSavingsGoal(formData)) { // LocalStorage version
+            if (addSavingsGoal(formData)) {
                 alert("Savings Goal (local) added!");
                 form.reset();
-                // window.location.href = 'saving_goal.html'; // Or back to dashboard
             } else { throw new Error('Failed to create savings goal (local)'); }
         } catch (error) { showError(error.message, form); }
     });
 }
 
-function addSavingsGoal(goal) { // LocalStorage version
-    const user = getLocalStoredUser(); // Use the one defined at the top of this script
+function addSavingsGoal(goal) {
+    const user = getLocalStoredUser();
     if (!user) { showError("You must be logged in."); return false; }
     if (!user.savingsGoals) user.savingsGoals = [];
     goal.id = Date.now();
     goal.currentAmount = 0;
     goal.createdAt = new Date().toISOString();
     user.savingsGoals.push(goal);
-    updateUserData(user); // This updates localStorage
+    updateUserData(user);
     console.log("DEBUG script.js: Savings goal added to localStorage:", goal);
     return true;
 }
 
-function updateSavingsGoals() { // Renamed to avoid conflict if API version is made later
+function updateSavingsGoals() {
     console.log("DEBUG script.js: updateSavingsGoals (localStorage version) called");
     const user = getLocalStoredUser();
-    // This assumes you have a <div class="goals-grid"> on dashboard.html or saving_goal.html
     const container = document.querySelector('.goals-grid');
-    if (!container) {
-        // console.warn("DEBUG script.js: .goals-grid container not found for savings goals.");
-        return; // Silently return if not on a page with this container
-    }
+    if (!container) return;
+
     if (!user || !user.savingsGoals || user.savingsGoals.length === 0) {
         container.innerHTML = "<p>No savings goals set yet.</p>";
         return;
@@ -520,8 +532,8 @@ function updateSavingsGoals() { // Renamed to avoid conflict if API version is m
             if (amountStr) {
                 const amount = parseFloat(amountStr);
                 if (!isNaN(amount) && amount > 0) {
-                    if (addToSavingsGoal(goalId, amount)) { // LocalStorage version
-                        updateSavingsGoals(); // Re-render
+                    if (addToSavingsGoal(goalId, amount)) {
+                        updateSavingsGoals();
                     }
                 } else { alert("Invalid amount entered."); }
             }
@@ -529,13 +541,13 @@ function updateSavingsGoals() { // Renamed to avoid conflict if API version is m
     });
 }
 
-function addToSavingsGoal(goalId, amount) { // LocalStorage version
+function addToSavingsGoal(goalId, amount) {
     const user = getLocalStoredUser();
     if (!user || !user.savingsGoals) return false;
     const goal = user.savingsGoals.find(g => g.id.toString() === goalId.toString());
     if (!goal) { showError("Goal not found."); return false; }
     goal.currentAmount += amount;
-    updateUserData(user); // Updates localStorage
+    updateUserData(user);
     console.log("DEBUG script.js: Added to savings goal (localStorage):", goalId, amount);
     return true;
 }
@@ -554,11 +566,18 @@ function getGoalIcon(category) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DEBUG script.js: DOMContentLoaded event fired on page:", window.location.pathname);
 
-    // General DOM interactions that should run on all/most pages
+    // General DOM interactions
     document.querySelectorAll('.type-option input[type="radio"]').forEach(radio => {
-        if (radio.checked) {
-            radio.closest('.type-option')?.classList.add('selected');
+        // Initialize based on checked state (applies if form is pre-filled or user navigates back)
+        const typeOption = radio.closest('.type-option');
+        if (typeOption) {
+            if (radio.checked) {
+                typeOption.classList.add('selected');
+            } else {
+                typeOption.classList.remove('selected');
+            }
         }
+
         radio.addEventListener('change', () => {
             document.querySelectorAll('.type-option').forEach(option => {
                 option.classList.remove('selected');
@@ -569,26 +588,45 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    const switchInput = document.querySelector('.switch input'); // For savings goal lock etc.
+    const switchInput = document.querySelector('.switch input');
     if (switchInput) {
         switchInput.addEventListener('change', function () {
             console.log('DEBUG script.js: Switch toggled:', this.checked);
         });
     }
-    // End of general DOM interactions
 
-    const user = getLocalStoredUser(); // Defined at the top of this script or from userApi.js
+    // --- Logic to Update User Avatar ---
+    const user = getLocalStoredUser();
     const path = window.location.pathname;
-    const isIndexPage = path === '/' || path.endsWith('/index.html') || path.endsWith('/NextGen-Finance-App/'); // Adjust if your root is different
+    const isIndexPage = path === '/' || path.endsWith('/index.html') || (path.endsWith('/') && !path.substring(0, path.length -1).includes('/'));
     const isLoginPage = path.includes('login.html');
     const isAuthPage = isIndexPage || isLoginPage;
+
+    if (user && user.username && !isAuthPage) { // Only on authenticated pages
+        const userAvatarElement = document.getElementById('userAvatar'); // Assumes <div id="userAvatar">
+        if (userAvatarElement) {
+            const firstLetter = user.username.charAt(0).toUpperCase();
+            userAvatarElement.textContent = firstLetter;
+            userAvatarElement.classList.add('has-initial'); // For styling
+        } else {
+            console.warn("DEBUG script.js: #userAvatar element not found on page:", path, " (This is normal for login/index pages without the navbar).");
+        }
+    } else if (!isAuthPage) { // If on a protected page but somehow no user, clear avatar
+        const userAvatarElement = document.getElementById('userAvatar');
+        if (userAvatarElement) {
+            userAvatarElement.textContent = '';
+            userAvatarElement.classList.remove('has-initial');
+        }
+    }
+    // --- End of Avatar Update ---
 
     if (!user && !isAuthPage) {
         console.log("DEBUG script.js: No user in localStorage and not on auth page, redirecting to login.html");
         window.location.href = 'login.html';
-        return;
+        return; // Stop further execution for this page load
     }
 
+    // Initialize page-specific forms and data loading
     if (isLoginPage) {
         console.log("DEBUG script.js: Current page is login.html, calling initAuthForms()");
         initAuthForms();
@@ -600,9 +638,9 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (path.includes('transaction.html')) {
         console.log("DEBUG script.js: Current page is transaction.html, calling initTransactionForm (API-driven).");
         initTransactionForm();
-    } else if (path.includes('new_savings.html')) { // Page for creating new savings goal
+    } else if (path.includes('new_savings.html')) {
         console.log("DEBUG script.js: Current page is new_savings.html, calling initSavingsGoalForm (localStorage based).");
-        initSavingsGoalForm(); // This form still uses localStorage
+        initSavingsGoalForm();
     }
-    // Add similar 'else if' for a page that might display all savings_goals, calling updateSavingsGoals()
+    // Add other page initializations here if needed.
 });
