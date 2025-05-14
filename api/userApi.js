@@ -213,24 +213,26 @@ async function fetchTransactionCategoriesApi(type = null) { // Renamed for clari
 
 // ==================== BALANCE/CYCLE FUNCTIONS ====================
 
-async function fetchCycleSummaryApi() { // Renamed for clarity
+async function fetchCycleSummaryApi() {
+    console.log("DEBUG userApi.js: fetchCycleSummaryApi called"); // A
     try {
         const response = await fetch(`${API_BASE_URL}/balance/current`, {
             credentials: 'include'
         });
+        console.log("DEBUG userApi.js: fetchCycleSummaryApi response status:", response.status); // B
 
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
-                await logoutUser(); // Attempt to clean up session
-                window.location.href = 'login.html';
-                throw new Error('Session expired or unauthorized. Please log in again.');
+                console.error("DEBUG userApi.js: fetchCycleSummaryApi - Unauthorized/Forbidden. Session might have expired."); // C
+                // await logoutUser(); // logoutUser is called by the catcher in script.js
+                throw new Error('Session expired or unauthorized. Please log in again.'); // D
             }
             const errorData = await response.json().catch(() => ({ message: `Failed to fetch summary (status ${response.status})` }));
-            throw new Error(errorData.message || 'Failed to fetch financial summary');
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
-        return await response.json(); // Expects BalanceDto
+        return await response.json();
     } catch (error) {
-        console.error('Error fetching cycle summary:', error);
+        console.error('DEBUG userApi.js: Error in fetchCycleSummaryApi:', error); // E
         throw error;
     }
 }
