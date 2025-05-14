@@ -4,8 +4,10 @@ const API_BASE_URL = 'http://localhost:8080/api'; // Ensure backend runs on 8080
 // ==================== AUTHENTICATION FUNCTIONS ====================
 
 async function loginUser(emailOrUsername, password) { // Parameter renamed for clarity
+    console.log("DEBUG userApi.js: loginUser called with:", emailOrUsername);
     try {
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+         console.log("DEBUG userApi.js: Preparing to fetch for login...");
+         const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -16,6 +18,7 @@ async function loginUser(emailOrUsername, password) { // Parameter renamed for c
                 password: password
             })
         });
+        console.log("DEBUG userApi.js: Fetch call completed. Response status:", response.status);
 
         if (!response.ok) {
             // Try to parse error, default to status text if parsing fails
@@ -42,6 +45,7 @@ async function loginUser(emailOrUsername, password) { // Parameter renamed for c
         return minimalUser;
 
     } catch (error) {
+         console.error('DEBUG userApi.js: Error in loginUser:', error);
         console.error('Login error:', error);
         throw error;
     }
@@ -60,7 +64,7 @@ async function registerUser(userData) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                username: userData.fullName, // Frontend "Full Name" maps to backend "username"
+                username: userData.username, 
                 password: userData.password,
                 allowanceCycleFrequency: userData.frequency.toUpperCase() // e.g., "MONTHLY"
             })
@@ -140,7 +144,7 @@ async function addApiTransaction(transactionData) {
             amount: transactionData.amount,
             // 'description' field in DTO maps to frontend 'notes'
             description: transactionData.notes || transactionData.category, // Default to category if notes empty
-            category: transactionData.category.toUpperCase().replace(/ /G, "_"), // e.g., "SCHOOL_FEES" from "School Fees"
+            category: transactionData.category.toUpperCase().replace(/ /g, "_"), // Use lowercase 'g' for global flag
             date: transactionData.date, // Expects YYYY-MM-DD
             incomeFrequency: null // Default to null
         };
