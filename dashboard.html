@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NextGen Finance - Dashboard</title>
-    <link rel="stylesheet" href="path/to/font-awesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.7/css/all.css">
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/responsive.css">
 </head>
@@ -19,7 +19,7 @@
             <a href="transaction.html" class="nav-link">Transactions</a>
         </div>
         <div class="user-menu">
-            <div class="user-avatar"></div>
+             <div class="user-avatar" id="userAvatar"></div>
             <div class="dropdown-menu">
               <a href="#" id="logoutBtn">Logout</a>
             </div>
@@ -35,7 +35,7 @@
             </div>
             <div class="action-buttons">
                 <button class="action-button" id="addTransactionBtn">Add Transaction</button>
-                <button class="action-button" id="setSavingsGoalBtn">Set a Saving Goal</button>
+                <!-- <button class="action-button" id="setSavingsGoalBtn">Set a Saving Goal</button> -->
             </div>
         </header>
 
@@ -60,20 +60,6 @@
                 <div class="metric-title">Current Balance</div>
                 <div class="metric-value">₦3,930.00</div>
                 <div class="metric-change">Available to spend</div>
-            </div>
-        </div>
-
-        <div class="chart-section">
-            <div class="chart-header">
-                <h3>Transaction Chart</h3>
-                <select class="chart-filter">
-                    <option>Last 7 days</option>
-                    <option>Last 30 days</option>
-                    <option>Last 6 months</option>
-                </select>
-            </div>
-            <div class="chart-placeholder">
-                Transaction Chart Visualization
             </div>
         </div>
 
