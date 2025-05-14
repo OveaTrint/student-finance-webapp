@@ -1,54 +1,61 @@
 // ==================== UTILITY FUNCTIONS ====================
 
-function getCurrentUser() {
-    return JSON.parse(localStorage.getItem('user')) || null;
+function getLocalStoredUser() { // Re-defined here for self-containment, but ideally from userApi.js
+    // If userApi.js is loaded first and defines this, you can remove this duplicate.
+    // For now, to ensure script.js can run independently for this part if needed:
+    const userString = localStorage.getItem('user');
+    if (userString) {
+        try {
+            return JSON.parse(userString);
+        } catch (e) {
+            console.error("Error parsing user from localStorage in script.js", e);
+            localStorage.removeItem('user');
+            return null;
+        }
+    }
+    return null;
 }
 
-function updateUserData(user) {
+// This function is less critical now for dashboard data, as data comes from API
+// but might be used if you store some local preferences.
+function updateUserData(user) { // For localStorage based savings goals
     localStorage.setItem('user', JSON.stringify(user));
 }
 
-function showError(message, elementId = null) {
+function showError(message, elementOrId = null) {
     const errorElement = document.createElement('div');
     errorElement.className = 'error-message';
     errorElement.textContent = message;
-    
-    if (elementId) {
-        const targetElement = document.getElementById(elementId);
-        if (targetElement) {
-            const existingError = targetElement.querySelector('.error-message');
+
+    let targetElement = null;
+    if (typeof elementOrId === 'string') {
+        targetElement = document.getElementById(elementOrId);
+    } else if (elementOrId instanceof HTMLElement) {
+        targetElement = elementOrId;
+    }
+
+    if (targetElement) {
+        const form = targetElement.closest('form') || targetElement; // Prefer placing in form
+        if (form) {
+            const existingError = form.querySelector('.error-message');
             if (existingError) existingError.remove();
-            targetElement.prepend(errorElement);
+            form.prepend(errorElement);
+        } else { // Fallback if no form or specific container found
+            const existingGlobalError = document.body.querySelector('.error-message:not(form .error-message)');
+            if(existingGlobalError) existingGlobalError.remove();
+            document.body.prepend(errorElement);
         }
-    } else {
+    } else { // Global error if no target
+        const existingGlobalError = document.body.querySelector('.error-message:not(form .error-message)');
+        if(existingGlobalError) existingGlobalError.remove();
         document.body.prepend(errorElement);
     }
-    
+
     setTimeout(() => errorElement.remove(), 5000);
 }
 
-// ==================== DOM ELEMENT INTERACTIONS ====================
-
-// Radio Button Interactions
-document.querySelectorAll('.type-option input[type="radio"]').forEach(radio => {
-    if(radio.checked) {
-        radio.closest('.type-option').classList.add('selected');
-    }
-    
-    radio.addEventListener('change', () => {
-        document.querySelectorAll('.type-option').forEach(option => {
-            option.classList.remove('selected');
-        });
-        if(radio.checked) {
-            radio.closest('.type-option').classList.add('selected');
-        }
-    });
-});
-
-// Toggle Switch Interaction
-document.querySelector('.switch input')?.addEventListener('change', function() {
-    console.log('Lock Goal:', this.checked);
-});
+// ==================== DOM ELEMENT INTERACTIONS (GENERAL) ====================
+// Moved to run within DOMContentLoaded to ensure elements exist
 
 // ==================== AUTHENTICATION & FORM HANDLING ====================
 
@@ -60,22 +67,20 @@ function getUrlParameter(name) {
 }
 
 function initAuthForms() {
-    console.log("DEBUG: initAuthForms called");
+    console.log("DEBUG script.js: initAuthForms called");
 
     const loginTab = document.getElementById('loginTab');
     const signupTab = document.getElementById('signupTab');
-    const loginForm = document.getElementById('loginForm');
-    const signupForm = document.getElementById('signupForm');
-    
+    const loginForm = document.getElementById('loginForm'); // Assumes <form id="loginForm">
+    const signupForm = document.getElementById('signupForm'); // Assumes <form id="signupForm">
+
     if (!loginTab || !signupTab || !loginForm || !signupForm) {
-        console.error("DEBUG: Auth form elements (tabs or forms) NOT FOUND!"); 
+        console.error("DEBUG script.js: Auth form elements (tabs or forms) NOT FOUND!");
         return;
     }
-     console.log("DEBUG: loginForm element found:", loginForm);
-     console.log("DEBUG: signupForm element found:", signupForm);
+    console.log("DEBUG script.js: loginForm element found:", loginForm);
+    console.log("DEBUG script.js: signupForm element found:", signupForm);
 
-    
-    // Initialize form state
     const formType = getUrlParameter('form');
     if (formType === 'signup') {
         signupTab.classList.add('active');
@@ -88,448 +93,516 @@ function initAuthForms() {
         signupTab.classList.remove('active');
         signupForm.style.display = 'none';
     }
-    
-    // Tab click handlers
+
     loginTab.addEventListener('click', () => {
         loginTab.classList.add('active');
         loginForm.style.display = 'block';
         signupTab.classList.remove('active');
         signupForm.style.display = 'none';
     });
-    
+
     signupTab.addEventListener('click', () => {
         signupTab.classList.add('active');
         signupForm.style.display = 'block';
         loginTab.classList.remove('active');
         loginForm.style.display = 'none';
     });
-    
-    // Form submissions
-   loginForm.addEventListener('submit', async (e) => {
-    console.log("DEBUG: Login form submitted!"); // Log 4
-    e.preventDefault();
 
-    const usernameInputEl = loginForm.querySelector('input[type="text"]');
-    const passwordInputEl = loginForm.querySelector('input[type="password"]');
-
-    if (!usernameInputEl || !passwordInputEl) {
-        console.error("DEBUG: Username or password input field not found in login form!"); // Log 5
-        showError("Internal error: Form fields missing.", loginForm.id || loginForm);
-        return;
-    }
-
-    const usernameValue = usernameInputEl.value;
-    const passwordValue = passwordInputEl.value;
-    console.log("DEBUG: Username to send:", usernameValue, "Password to send:", passwordValue); // Log 6
-
-    try {
-        console.log("DEBUG: Attempting to call loginUser API function (from userApi.js)..."); // Log 7
-
-        // --- CORRECTED LINE ---
-        const user = await loginUser(usernameValue, passwordValue); // Pass the actual values
-        // --- OR if you prefer to use the formData object directly (though less explicit than above):
-        // const formData = { username: usernameValue, password: passwordValue };
-        // const user = await loginUser(formData.username, formData.password);
-
-        console.log("DEBUG: API call loginUser completed. Response from API:", user); // Log 8
-
-        if (user && user.username) {
-            console.log("DEBUG: Login successful based on API response, redirecting to dashboard.html");
-            window.location.href = 'dashboard.html';
-        } else {
-            console.error("DEBUG: Login API call seemed successful, but user data issue. User object from API:", user);
-            showError("Login successful, but user data couldn't be fully retrieved. Try refreshing.", loginForm.id || loginForm);
-        }
-    } catch (error) {
-        console.error("DEBUG: Error caught during loginUser API call or in its processing:", error); // Log 9
-        showError(error.message, loginForm.id || loginForm); // The error.message here would have been "username is not defined"
-    }
-});
-    
-    // Inside initAuthForms() in script.js
-
-signupForm.addEventListener('submit', async (e) => {
-    console.log("DEBUG: Signup form submitted!"); // Keep this log
-    e.preventDefault();
-    const passwords = signupForm.querySelectorAll('input[type="password"]'); // This is fine for passwords
-
-    // Get values using their new IDs
-    const fullNameValue = document.getElementById('signupFullNameInput').value;
-    const usernameValue = document.getElementById('signupUsernameInput').value;
-    const passwordValue = passwords[0].value;
-    const confirmPasswordValue = passwords[1].value;
-    const frequencyValue = signupForm.querySelector('select[name="frequency"]').value;
-
-    const userData = {
-    fullName: document.getElementById('signupFullNameInput').value,
-    username: document.getElementById('signupUsernameInput').value,
-    password: passwords[0].value,
-    confirmPassword: passwords[1].value,
-    frequency: signupForm.querySelector('select[name="frequency"]').value
-};
-    console.log("DEBUG: Signup form data collected:", userData); // Keep this log
-
-    if (passwordValue !== confirmPasswordValue) {
-        showError("Passwords do not match!", signupForm); // Show error and stop
-        return;
-    }
-
-    try {
-        console.log("DEBUG: Attempting to call registerUser API function (from userApi.js)..."); // Keep this log
-        // The registerUser function in userApi.js needs to know which field to use for the backend 'username'.
-        // Make sure userApi.js's registerUser is expecting 'username' from this userData object.
-        // Example: body: JSON.stringify({ username: userData.username, password: userData.password, ... })
-        const result = await registerUser(userData); // API call
-        console.log("DEBUG: API call registerUser completed. Response from API:", result); // Keep this log
-
-        if (result && result.message && result.message.includes("successfully")) {
-            showError(result.message + " Please login.", signupForm.parentElement, true); // Global success
-            loginTab.click(); // Switch to login tab
-
-            // Pre-fill login form's username field
-            const loginUsernameField = document.getElementById('loginUsernameInput');
-            if (loginUsernameField) {
-                loginUsernameField.value = userData.username; // Pre-fill with the entered username
-            } else {
-                console.warn("DEBUG: Could not find #loginUsernameInput to prefill after signup.");
-            }
-
-        } else {
-            // Handle cases where result or result.message is not as expected
-            let errorMessage = "Signup failed. Please try again.";
-            if (result && result.message) { // If backend sends a JSON object with a message
-                errorMessage = result.message;
-            } else if (result && typeof result === 'string') { // If backend sends a plain string error
-                errorMessage = result;
-            } else if (result && result.error) { // Another common error pattern
-                 errorMessage = result.error;
-            }
-            // If the 'error' object from the catch block has more info (e.g., from fetch failing)
-            // that would be handled by the catch block itself.
-            // This 'else' handles backend responses that are 200 OK but logically a failure.
-            showError(errorMessage, signupForm);
-        }
-    } catch (error) {
-        console.error("DEBUG: Error caught during registerUser API call or in its processing:", error); // Keep this log
-        // If error.message is already set (e.g. "Passwords do not match" from userApi.js, or network error)
-        // that will be used. Otherwise, provide a generic one.
-        showError(error.message || "An unexpected error occurred during signup.", signupForm);
-    }
-});
-}
-
-
-// ==================== DASHBOARD FUNCTIONALITY ====================
-
-function initDashboard() {
-    // Navigation buttons
-    document.getElementById('addTransactionBtn')?.addEventListener('click', () => {
-        window.location.href = 'transaction.html';
-    });
-    
-    document.getElementById('setSavingsGoalBtn')?.addEventListener('click', () => {
-        window.location.href = 'new_savings.html';
-    });
-    
-    // Logout button
-    document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
+        console.log("DEBUG script.js: Login form submitted!");
         e.preventDefault();
-        localStorage.removeItem('user');
-        window.location.href = 'index.html';
+
+        // Assumes <input type="text" id="loginUsernameInput"> in login.html
+        const usernameInputEl = document.getElementById('loginUsernameInput') || loginForm.querySelector('input[type="text"]');
+        // Assumes <input type="password" id="loginPasswordInput"> in login.html
+        const passwordInputEl = document.getElementById('loginPasswordInput') || loginForm.querySelector('input[type="password"]');
+
+
+        if (!usernameInputEl || !passwordInputEl) {
+            console.error("DEBUG script.js: Username or password input field not found in login form!");
+            showError("Internal error: Form fields missing.", loginForm);
+            return;
+        }
+
+        const usernameValue = usernameInputEl.value;
+        const passwordValue = passwordInputEl.value;
+        console.log("DEBUG script.js: Username to send:", usernameValue, "Password to send:", passwordValue);
+
+        try {
+            console.log("DEBUG script.js: Attempting to call loginUser API function (from userApi.js)...");
+            const user = await loginUser(usernameValue, passwordValue); // from userApi.js
+            console.log("DEBUG script.js: API call loginUser completed. Response from API:", user);
+
+            if (user && user.username) {
+                console.log("DEBUG script.js: Login successful based on API response, redirecting to dashboard.html");
+                window.location.href = 'dashboard.html';
+            } else {
+                console.error("DEBUG script.js: Login API call seemed successful, but user data issue. User object from API:", user);
+                showError("Login successful, but user data couldn't be fully retrieved. Try refreshing.", loginForm);
+            }
+        } catch (error) {
+            console.error("DEBUG script.js: Error caught during loginUser API call or in its processing:", error);
+            showError(error.message || "Login failed. Please check your credentials.", loginForm);
+        }
     });
-    
-    // Update dashboard data
-    updateDashboard();
+
+    signupForm.addEventListener('submit', async (e) => {
+        console.log("DEBUG script.js: Signup form submitted!");
+        e.preventDefault();
+        const passwords = signupForm.querySelectorAll('input[type="password"]');
+
+        // Assumes <input type="text" id="signupFullNameInput"> in login.html
+        // Assumes <input type="text" id="signupUsernameInput"> in login.html
+        const fullNameValue = document.getElementById('signupFullNameInput')?.value || '';
+        const usernameValue = document.getElementById('signupUsernameInput')?.value || '';
+        const passwordValue = passwords[0]?.value || '';
+        const confirmPasswordValue = passwords[1]?.value || '';
+        const frequencyValue = signupForm.querySelector('select[name="frequency"]')?.value || 'MONTHLY';
+
+        const userData = {
+            fullName: fullNameValue,
+            username: usernameValue,
+            password: passwordValue,
+            confirmPassword: confirmPasswordValue,
+            frequency: frequencyValue
+        };
+        console.log("DEBUG script.js: Signup form data collected:", userData);
+
+        if (!usernameValue || !passwordValue) {
+            showError("Username and password are required.", signupForm);
+            return;
+        }
+        if (passwordValue !== confirmPasswordValue) {
+            showError("Passwords do not match!", signupForm);
+            return;
+        }
+
+        try {
+            console.log("DEBUG script.js: Attempting to call registerUser API function (from userApi.js)...");
+            const result = await registerUser(userData); // from userApi.js (ensure it sends userData.username)
+            console.log("DEBUG script.js: API call registerUser completed. Response from API:", result);
+
+            if (result && result.message && result.message.toLowerCase().includes("successfully")) {
+                showError(result.message + " Please login.", signupForm.parentElement, true);
+                loginTab.click();
+                const loginUsernameField = document.getElementById('loginUsernameInput'); // Assumes ID on login form
+                if (loginUsernameField) {
+                    loginUsernameField.value = userData.username;
+                } else {
+                    console.warn("DEBUG script.js: Could not find #loginUsernameInput to prefill after signup.");
+                }
+            } else {
+                let errorMessage = "Signup failed. Please try again.";
+                if (result && result.message) errorMessage = result.message;
+                else if (result && typeof result === 'string') errorMessage = result;
+                else if (result && result.error) errorMessage = result.error;
+                showError(errorMessage, signupForm);
+            }
+        } catch (error) {
+            console.error("DEBUG script.js: Error caught during registerUser API call or in its processing:", error);
+            showError(error.message || "An unexpected error occurred during signup.", signupForm);
+        }
+    });
 }
 
-function updateDashboard() {
-    const user = getCurrentUser();
-    if (!user) {
+// ==================== NEW DASHBOARD FUNCTIONALITY (API DRIVEN) ====================
+
+async function populateDashboardData() {
+    console.log("DEBUG script.js: populateDashboardData called");
+
+    const localUser = getLocalStoredUser();
+    if (!localUser || !localUser.username) {
+        console.log("DEBUG script.js: No local user found, redirecting to login from populateDashboardData.");
         window.location.href = 'login.html';
         return;
     }
-    
-    // Update user info
-    document.querySelector('.user-greeting h2').textContent = `Welcome back, ${user.username || 'User'}!`;
-    
-    // Update metrics
-    if (user.currentCycle) {
-        document.querySelectorAll('.metric-card')[0].querySelector('.metric-value').textContent = 
-            `₦${user.currentCycle.income?.toFixed(2) || '0.00'}`;
-        document.querySelectorAll('.metric-card')[1].querySelector('.metric-value').textContent = 
-            `₦${user.currentCycle.expenses?.toFixed(2) || '0.00'}`;
-        document.querySelectorAll('.metric-card')[2].querySelector('.metric-value').textContent = 
-            `₦${user.currentCycle.balance?.toFixed(2) || '0.00'}`;
+
+    const userGreetingElement = document.querySelector('.user-greeting h2');
+    if (userGreetingElement) {
+        userGreetingElement.textContent = `Welcome back, ${localUser.username}!`;
+    } else {
+        console.warn("DEBUG script.js: .user-greeting h2 element not found.");
     }
-    
-    // Update transactions
-    updateTransactionsList();
-    
-    // Update savings goals
-    updateSavingsGoals();
+
+    try {
+        console.log("DEBUG script.js: Attempting to fetch cycle summary from API...");
+        const cycleSummary = await fetchCycleSummaryApi(); // from userApi.js
+        console.log("DEBUG script.js: fetchCycleSummaryApi response:", cycleSummary);
+
+        if (cycleSummary) {
+            const totalIncomeEl = document.querySelector('.metrics-grid .metric-card:nth-child(1) .metric-value');
+            const totalExpensesEl = document.querySelector('.metrics-grid .metric-card:nth-child(2) .metric-value');
+            const currentBalanceEl = document.querySelector('.metrics-grid .metric-card:nth-child(3) .metric-value');
+            const overviewMessageEl = document.querySelector('.overview-message');
+
+            if (totalIncomeEl) totalIncomeEl.textContent = `₦${cycleSummary.totalIncome?.toFixed(2) || '0.00'}`;
+            else console.warn("DEBUG script.js: Total Income element not found.");
+
+            if (totalExpensesEl) totalExpensesEl.textContent = `₦${cycleSummary.totalExpenses?.toFixed(2) || '0.00'}`;
+            else console.warn("DEBUG script.js: Total Expenses element not found.");
+
+            if (currentBalanceEl) currentBalanceEl.textContent = `₦${cycleSummary.currentBalance?.toFixed(2) || '0.00'}`;
+            else console.warn("DEBUG script.js: Current Balance element not found.");
+
+            if (overviewMessageEl && cycleSummary.cyclePeriod) overviewMessageEl.textContent = `Here's your financial overview for ${cycleSummary.cyclePeriod}`;
+            else console.warn("DEBUG script.js: Overview message element or cyclePeriod data not found.");
+
+            if (cycleSummary.recentTransactions && cycleSummary.recentTransactions.length > 0) {
+                console.log("DEBUG script.js: Updating transactions list with data from cycleSummary:", cycleSummary.recentTransactions);
+                updateTransactionsListDisplay(cycleSummary.recentTransactions);
+            } else {
+                console.log("DEBUG script.js: No recent transactions in cycleSummary or it's empty.");
+                updateTransactionsListDisplay([]);
+            }
+        } else {
+            console.error("DEBUG script.js: cycleSummary data is null or undefined after API call.");
+            showError("Could not load dashboard summary data.", document.body);
+        }
+    } catch (error) {
+        console.error("DEBUG script.js: Error in populateDashboardData:", error);
+        showError("Could not load dashboard data: " + error.message, document.body);
+        if (error.message.toLowerCase().includes("session expired") || error.message.toLowerCase().includes("unauthorized") || (error.name === 'TypeError' && error.message.includes("Failed to fetch"))) {
+            console.log("DEBUG script.js: Redirecting to login due to error in populateDashboardData:", error.message);
+            await logoutUser(); // from userApi.js
+            window.location.href = 'login.html';
+        }
+    }
 }
 
-function updateTransactionsList() {
-    const user = getCurrentUser();
-    const container = document.querySelector('.transactions-list');
-    if (!user || !container || !user.transactions) return;
-    
-    const transactions = user.transactions.slice(0, 5);
-    container.innerHTML = `
-        <h3>Recent Transactions</h3>
-        ${transactions.length ? transactions.map(t => `
-            <div class="transaction-item">
-                <div>
-                    <div class="transaction-category">${t.category || 'Uncategorized'}</div>
-                    <div class="transaction-date">${new Date(t.date).toLocaleDateString() || ''}</div>
-                </div>
-                <div class="transaction-amount ${t.type === 'income' ? 'positive' : 'negative'}">
-                    ${t.type === 'income' ? '+' : '-'}₦${t.amount?.toFixed(2) || '0.00'}
-                </div>
-            </div>
-        `).join('') : '<p>No transactions yet</p>'}
-    `;
+function updateTransactionsListDisplay(transactions) {
+    console.log("DEBUG script.js: updateTransactionsListDisplay called with:", transactions);
+    const container = document.querySelector('.transactions-list'); // In dashboard.html
+
+    if (!container) {
+        console.error("DEBUG script.js: .transactions-list container not found in dashboard.html!");
+        return;
+    }
+
+    const validTransactions = Array.isArray(transactions) ? transactions.filter(t => t != null) : [];
+
+    if (validTransactions.length > 0) {
+        container.innerHTML = `
+            <h3>Recent Transactions</h3>
+            ${validTransactions.map(t => {
+                const categoryDisplay = t.categoryDisplayName || (t.category ? (typeof t.category === 'object' ? t.category.displayName || t.category.name : String(t.category)) : 'Uncategorized');
+                const dateDisplay = t.date ? new Date(t.date).toLocaleDateString() : 'N/A';
+                const amountDisplay = typeof t.amount === 'number' ? t.amount.toFixed(2) : '0.00';
+                const isIncome = String(t.type).toUpperCase() === 'INCOME';
+                const typeClass = isIncome ? 'positive' : 'negative';
+                const typePrefix = isIncome ? '+' : '-';
+
+                return `
+                    <div class="transaction-item">
+                        <div>
+                            <div class="transaction-category">${categoryDisplay}</div>
+                            <div class="transaction-date">${dateDisplay}</div>
+                        </div>
+                        <div class="transaction-amount ${typeClass}">
+                            ${typePrefix}₦${amountDisplay}
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        `;
+    } else {
+        container.innerHTML = `
+            <h3>Recent Transactions</h3>
+            <p>No transactions yet for this period.</p>
+        `;
+    }
 }
 
-// ==================== TRANSACTION FUNCTIONALITY ====================
+function initDashboardEventListeners() {
+    console.log("DEBUG script.js: initDashboardEventListeners called");
+    const addTransactionBtn = document.getElementById('addTransactionBtn'); // Assumes <button id="addTransactionBtn">
+    const setSavingsGoalBtn = document.getElementById('setSavingsGoalBtn'); // Assumes <button id="setSavingsGoalBtn">
+    const logoutBtn = document.getElementById('logoutBtn'); // Assumes <a href="#" id="logoutBtn">
+
+    if (addTransactionBtn) {
+        addTransactionBtn.addEventListener('click', () => {
+            window.location.href = 'transaction.html';
+        });
+    } else { console.warn("DEBUG script.js: addTransactionBtn not found"); }
+
+    if (setSavingsGoalBtn) {
+        setSavingsGoalBtn.addEventListener('click', () => {
+            alert("Set Savings Goal functionality not fully implemented with API yet.");
+            // window.location.href = 'new_savings.html'; // Your HTML had this button commented out
+        });
+    } else { console.warn("DEBUG script.js: setSavingsGoalBtn not found (ensure it has the ID and is not commented out if needed)"); }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            console.log("DEBUG script.js: Logout button clicked");
+            try {
+                await logoutUser(); // from userApi.js
+                console.log("DEBUG script.js: logoutUser API call finished. Redirecting to index.html");
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error("DEBUG script.js: Error during logout:", error);
+                localStorage.removeItem('user'); // Ensure local cleanup
+                window.location.href = 'index.html';
+            }
+        });
+    } else { console.warn("DEBUG script.js: logoutBtn not found in dashboard."); }
+}
+
+// ==================== TRANSACTION FUNCTIONALITY (API DRIVEN) ====================
 
 function initTransactionForm() {
-    const form = document.querySelector('.transaction-form');
-    if (!form) return;
-    
-    // Set default date
-    form.querySelector('input[type="date"]').valueAsDate = new Date();
-    
-    // Form submission
-    form.addEventListener('submit', (e) => {
+    console.log("DEBUG script.js: initTransactionForm called");
+    const form = document.querySelector('.transaction-form'); // Assumes <form class="transaction-form">
+    if (!form) {
+        console.warn("DEBUG script.js: Transaction form not found on this page.");
+        return;
+    }
+
+    const dateInput = form.querySelector('input[type="date"]');
+    if (dateInput) {
+        dateInput.valueAsDate = new Date();
+    }
+
+    const transactionTypeRadios = form.querySelectorAll('input[name="type"]');
+    const frequencyField = document.getElementById('frequencyField'); // Assumes <div id="frequencyField">
+
+    function toggleFrequencyField() {
+        if (frequencyField) {
+            const incomeSelected = form.querySelector('input[name="type"][value="income"]:checked');
+            frequencyField.style.display = incomeSelected ? 'block' : 'none';
+        }
+    }
+
+    if (transactionTypeRadios.length > 0 && frequencyField) {
+        transactionTypeRadios.forEach(radio => {
+            radio.addEventListener('change', toggleFrequencyField);
+        });
+        toggleFrequencyField();
+    }
+
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        const formData = {
-            type: form.querySelector('input[name="type"]:checked').value,
-            amount: parseFloat(form.querySelector('input[type="number"]').value),
-            category: form.querySelector('select').value,
-            date: form.querySelector('input[type="date"]').value,
-            notes: form.querySelector('textarea').value
+        console.log("DEBUG script.js: Transaction form submitted");
+
+        const type = form.querySelector('input[name="type"]:checked')?.value;
+        const amount = parseFloat(form.querySelector('input[type="number"]')?.value);
+        const category = form.querySelector('select')?.value; // This is the display name like "Salary"
+        const dateValue = form.querySelector('input[type="date"]')?.value;
+        const notes = form.querySelector('textarea')?.value || '';
+        let incomeFrequency = null;
+
+        if (type === 'income' && frequencyField && frequencyField.style.display !== 'none') {
+            incomeFrequency = frequencyField.querySelector('select[name="frequency"]')?.value;
+        }
+
+        if (!type || isNaN(amount) || !category || !dateValue) {
+            showError("Please fill in all required fields (Type, Amount, Category, Date).", form);
+            return;
+        }
+
+        const transactionData = {
+            type: type,
+            amount: amount,
+            category: category,
+            date: dateValue,
+            notes: notes,
+            incomeFrequency: incomeFrequency
         };
-        
+        console.log("DEBUG script.js: Transaction data to send:", transactionData);
+
         try {
-            if (addTransaction(formData)) {
+            console.log("DEBUG script.js: Attempting to call addApiTransaction...");
+            const savedTransaction = await addApiTransaction(transactionData); // from userApi.js
+            console.log("DEBUG script.js: addApiTransaction response:", savedTransaction);
+
+            if (savedTransaction && savedTransaction.id) {
                 window.location.href = 'dashboard.html';
             } else {
-                throw new Error('Failed to add transaction');
+                throw new Error('Failed to save transaction to server.');
             }
         } catch (error) {
-            showError(error.message, 'transactionForm');
+            console.error("DEBUG script.js: Error adding transaction:", error);
+            showError(error.message || 'Failed to add transaction. Please try again.', form);
         }
     });
+
+    const cancelButton = form.querySelector('.cancel-button'); // Assumes <button class="cancel-button">
+    if (cancelButton) {
+        cancelButton.addEventListener('click', () => {
+            window.location.href = 'dashboard.html';
+        });
+    }
 }
 
-function addTransaction(transaction) {
-    const user = getCurrentUser();
-    if (!user) return false;
-    
-    // Initialize arrays if they don't exist
-    if (!user.transactions) user.transactions = [];
-    if (!user.currentCycle) {
-        user.currentCycle = {
-            startDate: new Date(),
-            balance: 0,
-            income: 0,
-            expenses: 0
-        };
-    }
-    
-    // Add transaction
-    transaction.id = Date.now();
-    user.transactions.push(transaction);
-    
-    // Update cycle totals
-    if (transaction.type === 'income') {
-        user.currentCycle.income += transaction.amount;
-        user.currentCycle.balance += transaction.amount;
-    } else {
-        user.currentCycle.expenses += transaction.amount;
-        user.currentCycle.balance -= transaction.amount;
-    }
-    
-    updateUserData(user);
-    return true;
-}
-
-// ==================== SAVINGS GOALS FUNCTIONALITY ====================
-
+// ==================== SAVINGS GOALS FUNCTIONALITY (Still localStorage based) ====================
+// Kept as per your existing script, modify for API later if needed.
 function initSavingsGoalForm() {
-    const form = document.querySelector('.goal-form');
+    console.log("DEBUG script.js: initSavingsGoalForm called (localStorage based)");
+    const form = document.querySelector('.goal-form'); // Assumes <form class="goal-form"> on new_savings.html
     if (!form) return;
-    
-    // Set default date (3 months from now)
+
     const dateInput = form.querySelector('input[type="date"]');
-    const futureDate = new Date();
-    futureDate.setMonth(futureDate.getMonth() + 3);
-    dateInput.valueAsDate = futureDate;
-    
-    // Form submission
+    if (dateInput) {
+        const futureDate = new Date();
+        futureDate.setMonth(futureDate.getMonth() + 3);
+        dateInput.valueAsDate = futureDate;
+    }
+
     form.addEventListener('submit', (e) => {
         e.preventDefault();
-        
         const formData = {
-            name: form.querySelector('input[type="text"]').value,
-            targetAmount: parseFloat(form.querySelector('input[type="number"]').value),
-            category: form.querySelector('select').value,
-            targetDate: form.querySelector('input[type="date"]').value,
-            isLocked: form.querySelector('input[type="checkbox"]').checked
+            name: form.querySelector('input[type="text"]')?.value,
+            targetAmount: parseFloat(form.querySelector('input[type="number"]')?.value),
+            category: form.querySelector('select')?.value,
+            targetDate: form.querySelector('input[type="date"]')?.value,
+            isLocked: form.querySelector('input[type="checkbox"]')?.checked || false
         };
-        
-        try {
-            if (addSavingsGoal(formData)) {
-                window.location.href = 'saving_goal.html';
-            } else {
-                throw new Error('Failed to create savings goal');
-            }
-        } catch (error) {
-            showError(error.message, 'goalForm');
+        if (!formData.name || isNaN(formData.targetAmount) || !formData.targetDate) {
+            showError("Please fill in Goal Name, Target Amount, and Target Date.", form);
+            return;
         }
+        try {
+            if (addSavingsGoal(formData)) { // LocalStorage version
+                alert("Savings Goal (local) added!");
+                form.reset();
+                // window.location.href = 'saving_goal.html'; // Or back to dashboard
+            } else { throw new Error('Failed to create savings goal (local)'); }
+        } catch (error) { showError(error.message, form); }
     });
 }
 
-function addSavingsGoal(goal) {
-    const user = getCurrentUser();
-    if (!user) return false;
-    
+function addSavingsGoal(goal) { // LocalStorage version
+    const user = getLocalStoredUser(); // Use the one defined at the top of this script
+    if (!user) { showError("You must be logged in."); return false; }
     if (!user.savingsGoals) user.savingsGoals = [];
-    
     goal.id = Date.now();
     goal.currentAmount = 0;
     goal.createdAt = new Date().toISOString();
     user.savingsGoals.push(goal);
-    
-    updateUserData(user);
+    updateUserData(user); // This updates localStorage
+    console.log("DEBUG script.js: Savings goal added to localStorage:", goal);
     return true;
 }
 
-function updateSavingsGoals() {
-    const user = getCurrentUser();
+function updateSavingsGoals() { // Renamed to avoid conflict if API version is made later
+    console.log("DEBUG script.js: updateSavingsGoals (localStorage version) called");
+    const user = getLocalStoredUser();
+    // This assumes you have a <div class="goals-grid"> on dashboard.html or saving_goal.html
     const container = document.querySelector('.goals-grid');
-    if (!user || !container || !user.savingsGoals) return;
-    
+    if (!container) {
+        // console.warn("DEBUG script.js: .goals-grid container not found for savings goals.");
+        return; // Silently return if not on a page with this container
+    }
+    if (!user || !user.savingsGoals || user.savingsGoals.length === 0) {
+        container.innerHTML = "<p>No savings goals set yet.</p>";
+        return;
+    }
     container.innerHTML = user.savingsGoals.map(goal => `
         <div class="goal-card">
-            <div class="goal-icon">${getGoalIcon(goal.category)}</div>
-            <h3 class="goal-title">${goal.name}</h3>
+            <div class="goal-icon">${getGoalIcon(goal.category || 'default')}</div>
+            <h3 class="goal-title">${goal.name || 'Untitled Goal'}</h3>
             <p class="goal-target">Target: ₦${goal.targetAmount?.toFixed(2) || '0.00'}</p>
-            
             <div class="progress-bar">
-                <div class="progress-fill" style="width: ${(goal.currentAmount / goal.targetAmount * 100) || 0}%"></div>
+                <div class="progress-fill" style="width: ${((goal.currentAmount / goal.targetAmount) * 100) || 0}%"></div>
             </div>
-
             <div class="goal-progress">
                 <span class="current-amount">₦${goal.currentAmount?.toFixed(2) || '0.00'}</span>
-                <span class="percentage">${Math.round((goal.currentAmount / goal.targetAmount * 100) || 0)}%</span>
+                <span class="percentage">${Math.round(((goal.currentAmount / goal.targetAmount) * 100) || 0)}%</span>
             </div>
-
             <button class="add-to-goal" data-id="${goal.id}">Add to Goal</button>
         </div>
     `).join('');
-    
-    // Add event listeners to buttons
+
     document.querySelectorAll('.add-to-goal').forEach(button => {
-        button.addEventListener('click', function() {
-            const amount = parseFloat(prompt("Enter amount to add:"));
-            if (!isNaN(amount) && amount > 0) {
-                addToSavingsGoal(this.dataset.id, amount);
-                updateSavingsGoals();
+        button.addEventListener('click', function () {
+            const goalId = this.dataset.id;
+            const amountStr = prompt("Enter amount to add to this goal:");
+            if (amountStr) {
+                const amount = parseFloat(amountStr);
+                if (!isNaN(amount) && amount > 0) {
+                    if (addToSavingsGoal(goalId, amount)) { // LocalStorage version
+                        updateSavingsGoals(); // Re-render
+                    }
+                } else { alert("Invalid amount entered."); }
             }
         });
     });
 }
 
-function addToSavingsGoal(goalId, amount) {
-    const user = getCurrentUser();
+function addToSavingsGoal(goalId, amount) { // LocalStorage version
+    const user = getLocalStoredUser();
     if (!user || !user.savingsGoals) return false;
-    
     const goal = user.savingsGoals.find(g => g.id.toString() === goalId.toString());
-    if (!goal) return false;
-    
+    if (!goal) { showError("Goal not found."); return false; }
     goal.currentAmount += amount;
-    updateUserData(user);
+    updateUserData(user); // Updates localStorage
+    console.log("DEBUG script.js: Added to savings goal (localStorage):", goalId, amount);
     return true;
 }
 
 function getGoalIcon(category) {
     const icons = {
-        'emergency': '🛡️',
-        'vehicle': '🚗',
-        'housing': '🏠',
-        'education': '🎓',
-        'travel': '✈️'
+        'emergency': '🛡️', 'vehicle': '🚗', 'car': '🚗', 'housing': '🏠', 'home': '🏠',
+        'education': '🎓', 'school': '🎓', 'travel': '✈️', 'vacation': '✈️',
+        'default': '💰'
     };
-    return icons[category.toLowerCase()] || '💰';
+    return icons[category?.toLowerCase()] || icons['default'];
 }
 
-// ==================== CYCLE MANAGEMENT ====================
-
-function checkCycleReset() {
-    const user = getCurrentUser();
-    if (!user || !user.frequency || !user.currentCycle) return;
-    
-    const now = new Date();
-    const lastReset = new Date(user.currentCycle.startDate);
-    let needsReset = false;
-    
-    if (user.frequency === "WEEKLY") {
-        needsReset = getWeekNumber(now) !== getWeekNumber(lastReset);
-    } else if (user.frequency === "BIWEEKLY") {
-        const diffDays = Math.floor((now - lastReset) / (1000 * 60 * 60 * 24));
-        needsReset = diffDays >= 14;
-    } else { // MONTHLY
-        needsReset = now.getMonth() !== lastReset.getMonth();
-    }
-    
-    if (needsReset) {
-        user.currentCycle = {
-            startDate: now,
-            balance: 0,
-            income: 0,
-            expenses: 0
-        };
-        updateUserData(user);
-    }
-}
-
-function getWeekNumber(date) {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
-    const week1 = new Date(d.getFullYear(), 0, 4);
-    return 1 + Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-}
-
-// ==================== INITIALIZATION ====================
+// ==================== INITIALIZATION (END OF FILE) ====================
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Check if user is logged in for protected pages
-    const user = getCurrentUser();
-    const isAuthPage = window.location.pathname.includes('login.html') || 
-                      window.location.pathname.includes('index.html');
-    
+    console.log("DEBUG script.js: DOMContentLoaded event fired on page:", window.location.pathname);
+
+    // General DOM interactions that should run on all/most pages
+    document.querySelectorAll('.type-option input[type="radio"]').forEach(radio => {
+        if (radio.checked) {
+            radio.closest('.type-option')?.classList.add('selected');
+        }
+        radio.addEventListener('change', () => {
+            document.querySelectorAll('.type-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            if (radio.checked) {
+                radio.closest('.type-option')?.classList.add('selected');
+            }
+        });
+    });
+
+    const switchInput = document.querySelector('.switch input'); // For savings goal lock etc.
+    if (switchInput) {
+        switchInput.addEventListener('change', function () {
+            console.log('DEBUG script.js: Switch toggled:', this.checked);
+        });
+    }
+    // End of general DOM interactions
+
+    const user = getLocalStoredUser(); // Defined at the top of this script or from userApi.js
+    const path = window.location.pathname;
+    const isIndexPage = path === '/' || path.endsWith('/index.html') || path.endsWith('/NextGen-Finance-App/'); // Adjust if your root is different
+    const isLoginPage = path.includes('login.html');
+    const isAuthPage = isIndexPage || isLoginPage;
+
     if (!user && !isAuthPage) {
+        console.log("DEBUG script.js: No user in localStorage and not on auth page, redirecting to login.html");
         window.location.href = 'login.html';
         return;
     }
-    
-    // Initialize page-specific functionality
-    if (window.location.pathname.includes('login.html')) {
+
+    if (isLoginPage) {
+        console.log("DEBUG script.js: Current page is login.html, calling initAuthForms()");
         initAuthForms();
-    } else if (window.location.pathname.includes('dashboard.html')) {
-        initDashboard();
-    } else if (window.location.pathname.includes('transaction.html')) {
+    } else if (path.includes('dashboard.html')) {
+        console.log("DEBUG script.js: Current page is dashboard.html, calling API-driven dashboard functions.");
+        populateDashboardData();
+        initDashboardEventListeners();
+        updateSavingsGoals(); // For localStorage-based savings goals display
+    } else if (path.includes('transaction.html')) {
+        console.log("DEBUG script.js: Current page is transaction.html, calling initTransactionForm (API-driven).");
         initTransactionForm();
-    } else if (window.location.pathname.includes('new_savings.html')) {
-        initSavingsGoalForm();
-    } else if (window.location.pathname.includes('saving_goal.html')) {
-        updateSavingsGoals();
+    } else if (path.includes('new_savings.html')) { // Page for creating new savings goal
+        console.log("DEBUG script.js: Current page is new_savings.html, calling initSavingsGoalForm (localStorage based).");
+        initSavingsGoalForm(); // This form still uses localStorage
     }
-    
-    // Check for cycle reset on all pages
-    checkCycleReset();
+    // Add similar 'else if' for a page that might display all savings_goals, calling updateSavingsGoals()
 });
