@@ -4,10 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Add Transaction - NextGen Finance</title>
-    <link
-      rel="stylesheet"
-      href="https://use.fontawesome.com/releases/v5.0.7/css/all.css"
-    />
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.7/css/all.css">
     <link rel="stylesheet" href="./css/style.css" />
     <link rel="stylesheet" href="./css/responsive.css" />
   </head>
@@ -22,7 +19,7 @@
           <a href="transaction.html" class="nav-link active">Transactions</a>
         </div>
         <div class="user-menu">
-          <div class="user-avatar"></div>
+           <div class="user-avatar" id="userAvatar"></div>
           <div class="dropdown-menu">
             <a href="#" id="logoutBtn">Logout</a>
           </div>
@@ -61,18 +58,28 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Category</label>
-          <select required>
-            <option value="">Select a category</option>
-            <option>Salary</option>
-            <option>Groceries</option>
-            <option>Rent</option>
-            <option>Utilities</option>
-            <option>Transportation</option>
-            <option>Entertainment</option>
-          </select>
-        </div>
+       <!-- transaction.html -->
+<div class="form-group">
+  <label>Category</label>
+  <select required id="transactionCategorySelect"> <!-- Good to have an ID -->
+    <option value="">Select a category</option>
+    <!-- Income Categories (match backend Category enum names) -->
+    <option value="SALARY">Salary</option>
+    <option value="ALLOWANCE">Allowance</option>
+    <option value="GIFTS">Gifts</option>
+    <option value="OTHER_INCOME">Other Income</option>
+    <!-- Expense Categories (match backend Category enum names) -->
+    <option value="FOOD">Groceries/Food</option>
+    <option value="RENT">Rent</option>
+    <option value="UTILITIES">Utilities</option>
+    <option value="TRANSPORT">Transportation</option>
+    <option value="ENTERTAINMENT">Entertainment</option>
+    <option value="DATA">Data</option>
+    <option value="SCHOOL_FEES">School Fees</option>
+    <option value="SHOPPING">Shopping</option>
+    <option value="MISC">Misc</option>
+  </select>
+</div>
 
         <div class="form-group">
           <label>Date</label>
@@ -94,13 +101,6 @@
           <textarea placeholder="Add any additional notes..."></textarea>
         </div>
 
-        <div class="form-actions">
-          <button type="submit" class="submit-button">
-            Submit Transaction
-          </button>
-          <button type="button" class="cancel-button">Cancel</button>
-        </div>
-
         <div class="filters">
           <select id="cycleFilter">
             <option value="current">Current Cycle</option>
@@ -108,6 +108,15 @@
             <option value="2025-04">April 2025</option>
           </select>
         </div>
+
+        <div class="form-actions">
+          <button type="submit" class="submit-button">
+            Submit Transaction
+          </button>
+          <button type="button" class="cancel-button">Cancel</button>
+        </div>
+
+        
       </form>
     </div>
 
