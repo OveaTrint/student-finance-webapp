@@ -6,7 +6,7 @@
     <title>NextGen Finance - Login</title>
     <link
       rel="stylesheet"
-      href="path/to/font-awesome/css/font-awesome.min.css"
+      href="https://use.fontawesome.com/releases/v5.0.7/css/all.css"
     />
     <link rel="stylesheet" href="./css/style.css" />
     <link rel="stylesheet" href="./css/responsive.css" />
@@ -28,7 +28,7 @@
           <form id="loginForm" class="auth-form">
             <div class="form-group">
               <label>Username</label>
-              <input type="text" required />
+              <input type="text" required id="loginUsernameInput" required />
             </div>
 
             <div class="form-group">
@@ -44,40 +44,37 @@
             <a href="#" class="forgot-password">Forgot password?</a>
 
             <button type="submit" class="cta-button">Login</button>
-
           </form>
 
           <!-- Sign Up Form (initially hidden) -->
+          <!-- In login.html -->
           <form id="signupForm" class="auth-form" style="display: none">
             <div class="form-group">
               <label>Full Name</label>
-              <input type="text" required />
+              <input type="text" required id="signupFullNameInput" />
+              <!-- Added ID -->
             </div>
-
             <div class="form-group">
               <label>Username</label>
-              <input type="text" required />
+              <input type="text" required id="signupUsernameInput" />
+              <!-- Added ID -->
             </div>
-
             <div class="form-group">
               <label>Password</label>
               <input type="password" required />
             </div>
-
             <div class="form-group">
               <label>Confirm Password</label>
               <input type="password" required />
             </div>
-
             <div class="form-group">
               <label>Allowance Frequency</label>
               <select name="frequency" required>
                 <option value="WEEKLY">Weekly</option>
                 <option value="MONTHLY" selected>Monthly</option>
-                <option value="BIWEEKLY">Bi-weekly</option>
+                <!-- <option value="BIWEEKLY">Bi-weekly</option> <-- REMOVE THIS or add to backend Enum -->
               </select>
             </div>
-
             <button type="submit" class="cta-button">Sign Up</button>
           </form>
         </div>
@@ -95,7 +92,7 @@
         </div>
       </footer>
     </div>
-   <script src="./api/userApi.js"></script>
-   <script src="./script.js"></script>
+    <script src="./api/userApi.js"></script>
+    <script src="./script.js"></script>
   </body>
 </html>
