@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map; // <<< ADD THIS IMPORT
 
 @Data
 @NoArgsConstructor
@@ -19,4 +20,5 @@ public class BalanceDto {
     private LocalDate cycleEndDate;
     private String cyclePeriod; // e.g., "May 2025" or "Week 20, 2025"
     private List<TransactionDto> recentTransactions; // Optional: include a few recent ones
+    private Map<String, BigDecimal> spendingByCategory;
 }
