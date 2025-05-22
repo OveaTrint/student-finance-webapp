@@ -1,5 +1,5 @@
 // ==================== CONFIGURATION ====================
-const API_BASE_URL = 'http://localhost:8080/api'; // Ensure backend runs on 8080
+const API_BASE_URL = 'http://localhost:8080/api'; // Ensure backend runs on 8080. it connects it to the backend
 
 // ==================== AUTHENTICATION FUNCTIONS ====================
 
