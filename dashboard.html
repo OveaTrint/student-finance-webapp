@@ -82,6 +82,16 @@
             </div>
         </div>
 
+        <div class="chart-section">
+    <div class="chart-header">
+        <h3>Spending by Category</h3>
+        <!-- You might want a filter here later (e.g., current cycle, last month) -->
+    </div>
+    <div class="chart-container" style="position: relative; height:40vh; width:80vw; margin: auto;">
+        <canvas id="spendingPieChart"></canvas>
+    </div>
+</div>
+
         <footer class="footer">
             <span>© 2025 NextGen Finance. All rights reserved.</span>
             <div class="social-icons">
@@ -91,6 +101,7 @@
             </div>
         </footer>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
    <script src="./api/userApi.js"></script>
    <script src="./script.js"></script>
 </body>
