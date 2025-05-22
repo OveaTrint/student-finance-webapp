@@ -1,6 +1,8 @@
 // ==================== UTILITY FUNCTIONS ====================
 
 function getLocalStoredUser() {
+    // This function is also expected in userApi.js.
+    // Ensure only one effective definition or that they are identical.
     const userString = localStorage.getItem('user');
     if (userString) {
         try {
@@ -14,7 +16,7 @@ function getLocalStoredUser() {
     return null;
 }
 
-function updateUserData(user) { // For localStorage based savings goals
+function updateUserData(user) { // Primarily for localStorage based savings goals now
     localStorage.setItem('user', JSON.stringify(user));
 }
 
@@ -205,7 +207,6 @@ async function populateDashboardData() {
         return;
     }
 
-    // User greeting is updated here as well, ensuring it's based on the latest from localStorage
     const userGreetingElement = document.querySelector('.user-greeting h2');
     if (userGreetingElement) {
         userGreetingElement.textContent = `Welcome back, ${localUser.username}!`;
@@ -219,51 +220,61 @@ async function populateDashboardData() {
         console.log("DEBUG script.js: fetchCycleSummaryApi response:", cycleSummary);
 
         if (cycleSummary) {
+            console.log("DEBUG script.js: cycleSummary object IS NOT NULL/UNDEFINED. Proceeding to update HTML.");
             const totalIncomeEl = document.querySelector('.metrics-grid .metric-card:nth-child(1) .metric-value');
             const totalExpensesEl = document.querySelector('.metrics-grid .metric-card:nth-child(2) .metric-value');
             const currentBalanceEl = document.querySelector('.metrics-grid .metric-card:nth-child(3) .metric-value');
             const overviewMessageEl = document.querySelector('.overview-message');
 
-            if (totalIncomeEl) totalIncomeEl.textContent = `₦${cycleSummary.totalIncome?.toFixed(2) || '0.00'}`;
-            else console.warn("DEBUG script.js: Total Income element not found.");
+            if (totalIncomeEl) {
+                totalIncomeEl.textContent = `₦${cycleSummary.totalIncome?.toFixed(2) || '0.00'}`;
+                console.log("DEBUG script.js: Updated Total Income to:", totalIncomeEl.textContent);
+            } else { console.warn("DEBUG script.js: Total Income element NOT FOUND."); }
 
-            if (totalExpensesEl) totalExpensesEl.textContent = `₦${cycleSummary.totalExpenses?.toFixed(2) || '0.00'}`;
-            else console.warn("DEBUG script.js: Total Expenses element not found.");
+            if (totalExpensesEl) {
+                totalExpensesEl.textContent = `₦${cycleSummary.totalExpenses?.toFixed(2) || '0.00'}`;
+                console.log("DEBUG script.js: Updated Total Expenses to:", totalExpensesEl.textContent);
+            } else { console.warn("DEBUG script.js: Total Expenses element NOT FOUND."); }
 
-            if (currentBalanceEl) currentBalanceEl.textContent = `₦${cycleSummary.currentBalance?.toFixed(2) || '0.00'}`;
-            else console.warn("DEBUG script.js: Current Balance element not found.");
+            if (currentBalanceEl) {
+                currentBalanceEl.textContent = `₦${cycleSummary.currentBalance?.toFixed(2) || '0.00'}`;
+                 console.log("DEBUG script.js: Updated Current Balance to:", currentBalanceEl.textContent);
+            } else { console.warn("DEBUG script.js: Current Balance element NOT FOUND."); }
 
-            if (overviewMessageEl && cycleSummary.cyclePeriod) overviewMessageEl.textContent = `Here's your financial overview for ${cycleSummary.cyclePeriod}`;
-            else console.warn("DEBUG script.js: Overview message element or cyclePeriod data not found.");
+            if (overviewMessageEl && cycleSummary.cyclePeriod) {
+                 overviewMessageEl.textContent = `Here's your financial overview for ${cycleSummary.cyclePeriod}`;
+                 console.log("DEBUG script.js: Updated Overview Message to:", overviewMessageEl.textContent);
+            } else { console.warn("DEBUG script.js: Overview message element or cycleSummary.cyclePeriod NOT FOUND/EMPTY."); }
 
+            // Update metric-change texts dynamically based on data (simple version)
             const incomeChangeEl = document.querySelector('.metrics-grid .metric-card:nth-child(1) .metric-change');
             const expenseChangeEl = document.querySelector('.metrics-grid .metric-card:nth-child(2) .metric-change');
             const balanceChangeEl = document.querySelector('.metrics-grid .metric-card:nth-child(3) .metric-change');
 
             if (incomeChangeEl) {
                 if (cycleSummary.totalIncome != null && cycleSummary.totalIncome > 0) {
-                    incomeChangeEl.textContent = 'Income recorded this cycle';
+                    incomeChangeEl.textContent = 'Income recorded this cycle'; // Or calculate actual % change if you add previous cycle data
                     incomeChangeEl.className = 'metric-change positive';
                 } else {
                     incomeChangeEl.textContent = 'No income this cycle';
                     incomeChangeEl.className = 'metric-change';
                 }
-            } else { console.warn("DEBUG script.js: Income Change element not found."); }
+            }
 
             if (expenseChangeEl) {
-                if (cycleSummary.totalExpenses != null && cycleSummary.totalExpenses > 0) {
-                    expenseChangeEl.textContent = 'Expenses recorded this cycle';
+                 if (cycleSummary.totalExpenses != null && cycleSummary.totalExpenses > 0) {
+                    expenseChangeEl.textContent = 'Expenses this cycle';  // Or calculate actual % change
                     expenseChangeEl.className = 'metric-change negative';
                 } else {
                     expenseChangeEl.textContent = 'No expenses this cycle';
                     expenseChangeEl.className = 'metric-change';
                 }
-            } else { console.warn("DEBUG script.js: Expense Change element not found."); }
+            }
 
-            if (balanceChangeEl) {
+            if (balanceChangeEl) { // This one is usually just a static message
                 balanceChangeEl.textContent = 'Available to spend';
-                balanceChangeEl.className = 'metric-change';
-            } else { console.warn("DEBUG script.js: Balance Change element not found."); }
+            }
+
 
             if (cycleSummary.recentTransactions && cycleSummary.recentTransactions.length > 0) {
                 console.log("DEBUG script.js: Updating transactions list with data from cycleSummary:", cycleSummary.recentTransactions);
@@ -272,14 +283,25 @@ async function populateDashboardData() {
                 console.log("DEBUG script.js: No recent transactions in cycleSummary or it's empty.");
                 updateTransactionsListDisplay([]);
             }
+
+            if (cycleSummary.spendingByCategory) {
+                console.log("DEBUG script.js: Rendering pie chart with data:", cycleSummary.spendingByCategory);
+                renderSpendingPieChart(cycleSummary.spendingByCategory);
+            } else {
+                console.warn("DEBUG script.js: spendingByCategory data not found in cycleSummary.");
+                renderSpendingPieChart({}); // Render an empty/no data chart
+            }
+
         } else {
-            console.error("DEBUG script.js: cycleSummary data is null or undefined after API call.");
-            showError("Could not load dashboard summary data.", document.body);
+            console.error("DEBUG script.js: cycleSummary data IS NULL or UNDEFINED after API call.");
+            showError("Could not load dashboard summary data (cycleSummary was null).", document.body);
+            renderSpendingPieChart({}); // Also render empty chart here
         }
     } catch (error) {
-        console.error("DEBUG script.js: Error in populateDashboardData:", error);
+        console.error("DEBUG script.js: Error IN CATCH for populateDashboardData:", error);
         showError("Could not load dashboard data: " + error.message, document.body);
-        if (error.message.toLowerCase().includes("session expired") || error.message.toLowerCase().includes("unauthorized") || (error.name === 'TypeError' && error.message.includes("Failed to fetch"))) {
+        renderSpendingPieChart({}); // Render empty chart on error
+        if (error.message.toLowerCase().includes("session expired") || error.message.toLowerCase().includes("unauthorized")) {
             console.log("DEBUG script.js: Redirecting to login due to error in populateDashboardData:", error.message);
             await logoutUser(); // from userApi.js
             window.location.href = 'login.html';
@@ -302,7 +324,9 @@ function updateTransactionsListDisplay(transactions) {
         container.innerHTML = `
             <h3>Recent Transactions</h3>
             ${validTransactions.map(t => {
-                const categoryDisplay = t.categoryDisplayName || (t.category ? (typeof t.category === 'object' ? t.category.displayName || t.category.name : String(t.category)) : 'Uncategorized');
+                // Backend's TransactionDto has 'category' (enum) and we added 'categoryDisplayName'
+                // Fallback: If categoryDisplayName is not sent, try to use category (which would be enum name)
+                const categoryDisplay = t.categoryDisplayName || (t.category ? String(t.category) : 'Uncategorized');
                 const dateDisplay = t.date ? new Date(t.date).toLocaleDateString() : 'N/A';
                 const amountDisplay = typeof t.amount === 'number' ? t.amount.toFixed(2) : '0.00';
                 const isIncome = String(t.type).toUpperCase() === 'INCOME';
@@ -333,7 +357,7 @@ function updateTransactionsListDisplay(transactions) {
 function initDashboardEventListeners() {
     console.log("DEBUG script.js: initDashboardEventListeners called");
     const addTransactionBtn = document.getElementById('addTransactionBtn');
-    const setSavingsGoalBtn = document.getElementById('setSavingsGoalBtn');
+    const setSavingsGoalBtn = document.getElementById('setSavingsGoalBtn'); // In your HTML, this is commented out
     const logoutBtn = document.getElementById('logoutBtn');
 
     if (addTransactionBtn) {
@@ -346,7 +370,7 @@ function initDashboardEventListeners() {
         setSavingsGoalBtn.addEventListener('click', () => {
             alert("Set Savings Goal functionality not fully implemented with API yet.");
         });
-    } else { console.warn("DEBUG script.js: setSavingsGoalBtn not found (ensure it has the ID and is not commented out in HTML)"); }
+    } else { console.warn("DEBUG script.js: setSavingsGoalBtn not found (ensure it has the ID and is not commented out if needed)"); }
 
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
@@ -380,6 +404,15 @@ function initTransactionForm() {
         dateInput.valueAsDate = new Date();
     }
 
+    // Populate category dropdown
+    const categorySelect = document.getElementById('transactionCategorySelect'); // Requires <select id="transactionCategorySelect">
+    if (categorySelect) {
+        populateTransactionCategories(categorySelect); // Call new function
+    } else {
+        console.warn("DEBUG script.js: Category select with id 'transactionCategorySelect' not found.");
+    }
+
+
     const transactionTypeRadios = form.querySelectorAll('input[name="type"]');
     const frequencyField = document.getElementById('frequencyField');
 
@@ -387,6 +420,7 @@ function initTransactionForm() {
         if (frequencyField) {
             const incomeSelected = form.querySelector('input[name="type"][value="income"]:checked');
             frequencyField.style.display = incomeSelected ? 'block' : 'none';
+            if (categorySelect) populateTransactionCategories(categorySelect, incomeSelected ? 'income' : 'expense'); // Repopulate categories on type change
         }
     }
 
@@ -394,8 +428,11 @@ function initTransactionForm() {
         transactionTypeRadios.forEach(radio => {
             radio.addEventListener('change', toggleFrequencyField);
         });
-        toggleFrequencyField();
+        toggleFrequencyField(); // Initial check and category population
+    } else { // If no type radios, populate all categories
+        if (categorySelect) populateTransactionCategories(categorySelect);
     }
+
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -403,7 +440,7 @@ function initTransactionForm() {
 
         const type = form.querySelector('input[name="type"]:checked')?.value;
         const amount = parseFloat(form.querySelector('input[type="number"]')?.value);
-        const category = form.querySelector('#transactionCategorySelect')?.value; // Uses ID
+        const category = categorySelect?.value; // Value from the select (should be enum NAME)
         const dateValue = form.querySelector('input[type="date"]')?.value;
         const notes = form.querySelector('textarea')?.value || '';
         let incomeFrequency = null;
@@ -420,7 +457,7 @@ function initTransactionForm() {
         const transactionData = {
             type: type,
             amount: amount,
-            category: category,
+            category: category, // Should be enum NAME like "FOOD", "SALARY"
             date: dateValue,
             notes: notes,
             incomeFrequency: incomeFrequency
@@ -450,6 +487,31 @@ function initTransactionForm() {
         });
     }
 }
+
+async function populateTransactionCategories(selectElement, type = null) {
+    console.log("DEBUG script.js: populateTransactionCategories called for type:", type);
+    if (!selectElement) return;
+
+    try {
+        const categories = await fetchTransactionCategoriesApi(type); // from userApi.js
+        console.log("DEBUG script.js: Fetched categories:", categories);
+        selectElement.innerHTML = '<option value="">Select a category</option>'; // Clear existing and add default
+        if (categories && categories.length > 0) {
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.value; // This should be the enum name string (e.g., "FOOD")
+                option.textContent = cat.displayName; // This is "Food"
+                selectElement.appendChild(option);
+            });
+        } else {
+            console.log("DEBUG script.js: No categories fetched or categories array is empty.");
+        }
+    } catch (error) {
+        console.error("DEBUG script.js: Error populating transaction categories:", error);
+        showError("Could not load transaction categories.", selectElement.closest('form'));
+    }
+}
+
 
 // ==================== SAVINGS GOALS FUNCTIONALITY (Still localStorage based) ====================
 function initSavingsGoalForm() {
@@ -502,7 +564,7 @@ function addSavingsGoal(goal) {
 function updateSavingsGoals() {
     console.log("DEBUG script.js: updateSavingsGoals (localStorage version) called");
     const user = getLocalStoredUser();
-    const container = document.querySelector('.goals-grid');
+    const container = document.querySelector('.goals-grid'); // Assumes this class is on dashboard or a savings page
     if (!container) return;
 
     if (!user || !user.savingsGoals || user.savingsGoals.length === 0) {
@@ -561,6 +623,92 @@ function getGoalIcon(category) {
     return icons[category?.toLowerCase()] || icons['default'];
 }
 
+// ==================== PIE CHART FUNCTIONALITY ====================
+let spendingPieChartInstance = null;
+
+function renderSpendingPieChart(spendingData) {
+    console.log("DEBUG script.js: renderSpendingPieChart called with data:", spendingData);
+    const ctx = document.getElementById('spendingPieChart')?.getContext('2d');
+    if (!ctx) {
+        console.error("DEBUG script.js: Canvas element for spendingPieChart not found!");
+        return;
+    }
+
+    if (!spendingData || Object.keys(spendingData).length === 0) {
+        console.log("DEBUG script.js: No spending data to display in pie chart.");
+        if (spendingPieChartInstance) {
+            spendingPieChartInstance.destroy();
+            spendingPieChartInstance = null;
+        }
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#888";
+        ctx.textAlign = 'center';
+        ctx.fillText('No spending data for this period.', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        return;
+    }
+
+    const labels = Object.keys(spendingData);
+    const dataValues = Object.values(spendingData);
+
+    const backgroundColors = labels.map((_, index) => {
+        // Predefined palette or generate a consistent set of colors
+        const palette = [
+            'rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)',
+            'rgba(75, 192, 192, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)',
+            'rgba(199, 199, 199, 0.7)', 'rgba(83, 102, 83, 0.7)', 'rgba(140, 159, 54, 0.7)'
+        ];
+        return palette[index % palette.length]; // Cycle through palette
+    });
+
+    if (spendingPieChartInstance) {
+        spendingPieChartInstance.destroy();
+    }
+
+    spendingPieChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Spending by Category',
+                data: dataValues,
+                backgroundColor: backgroundColors,
+                borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 20,
+                        padding: 20
+                    }
+                },
+                title: {
+                    display: false, // Title is already in .chart-header h3
+                    // text: 'Spending Breakdown'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) { label += ': '; }
+                            if (context.parsed !== null) {
+                                label += new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(context.parsed);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
 // ==================== INITIALIZATION (END OF FILE) ====================
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -568,23 +716,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // General DOM interactions
     document.querySelectorAll('.type-option input[type="radio"]').forEach(radio => {
-        // Initialize based on checked state (applies if form is pre-filled or user navigates back)
         const typeOption = radio.closest('.type-option');
         if (typeOption) {
-            if (radio.checked) {
-                typeOption.classList.add('selected');
-            } else {
-                typeOption.classList.remove('selected');
-            }
+            if (radio.checked) typeOption.classList.add('selected');
+            else typeOption.classList.remove('selected');
         }
-
         radio.addEventListener('change', () => {
-            document.querySelectorAll('.type-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            if (radio.checked) {
-                radio.closest('.type-option')?.classList.add('selected');
-            }
+            document.querySelectorAll('.type-option').forEach(option => option.classList.remove('selected'));
+            if (radio.checked) radio.closest('.type-option')?.classList.add('selected');
         });
     });
 
@@ -595,38 +734,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- Logic to Update User Avatar ---
     const user = getLocalStoredUser();
     const path = window.location.pathname;
-    const isIndexPage = path === '/' || path.endsWith('/index.html') || (path.endsWith('/') && !path.substring(0, path.length -1).includes('/'));
+    // Adjust if your app is in a subfolder on the server in production
+    // For Live Server, path often starts with / or /index.html
+    const isIndexPage = path === '/' || path.endsWith('/index.html') || path.endsWith('/NextGen-Finance-App/'); // Example for GitHub Pages
     const isLoginPage = path.includes('login.html');
     const isAuthPage = isIndexPage || isLoginPage;
 
-    if (user && user.username && !isAuthPage) { // Only on authenticated pages
-        const userAvatarElement = document.getElementById('userAvatar'); // Assumes <div id="userAvatar">
+    if (user && user.username && !isAuthPage) {
+        const userAvatarElement = document.getElementById('userAvatar');
         if (userAvatarElement) {
             const firstLetter = user.username.charAt(0).toUpperCase();
             userAvatarElement.textContent = firstLetter;
-            userAvatarElement.classList.add('has-initial'); // For styling
-        } else {
-            console.warn("DEBUG script.js: #userAvatar element not found on page:", path, " (This is normal for login/index pages without the navbar).");
-        }
-    } else if (!isAuthPage) { // If on a protected page but somehow no user, clear avatar
-        const userAvatarElement = document.getElementById('userAvatar');
-        if (userAvatarElement) {
-            userAvatarElement.textContent = '';
-            userAvatarElement.classList.remove('has-initial');
+            userAvatarElement.style.backgroundColor = '#007bff'; // Example color
+            userAvatarElement.style.color = 'white';
+            userAvatarElement.style.display = 'flex';
+            userAvatarElement.style.alignItems = 'center';
+            userAvatarElement.style.justifyContent = 'center';
+            userAvatarElement.style.borderRadius = '50%';
+            userAvatarElement.style.width = '30px'; // Adjust size
+            userAvatarElement.style.height = '30px';// Adjust size
+            userAvatarElement.style.fontSize = '1em'; // Adjust size
         }
     }
-    // --- End of Avatar Update ---
 
     if (!user && !isAuthPage) {
         console.log("DEBUG script.js: No user in localStorage and not on auth page, redirecting to login.html");
         window.location.href = 'login.html';
-        return; // Stop further execution for this page load
+        return;
     }
 
-    // Initialize page-specific forms and data loading
     if (isLoginPage) {
         console.log("DEBUG script.js: Current page is login.html, calling initAuthForms()");
         initAuthForms();
@@ -642,5 +780,5 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("DEBUG script.js: Current page is new_savings.html, calling initSavingsGoalForm (localStorage based).");
         initSavingsGoalForm();
     }
-    // Add other page initializations here if needed.
+    // Add other page initializations here
 });
